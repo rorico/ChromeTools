@@ -1,0 +1,43 @@
+{
+  "name": "Chrome Tools",
+  "version": "4.3",
+  "description": "Various tools to help with organization and time management",
+  "permissions": ["<all_urls>","alarms","storage","tabs","unlimitedStorage","activeTab","webRequest","webRequestBlocking"],
+  "background": {
+    "page": "html/background.html"
+  },
+  "browser_action": {
+      "default_popup": "html/browserAction.html",
+      "default_title": "Chrome Tools"
+  },
+  "commands": {
+    "_execute_browser_action": {
+      "suggested_key": {
+        "mac": "MacCtrl+Space",
+        "default": "Ctrl+Space"
+      }
+    },
+    "open_schedule": {
+      "suggested_key": {
+        "default": "Alt+R"
+      },
+      "description": "Open Schedule"
+    },
+    "open_options": {
+      "suggested_key": {
+        "default": "Alt+T"
+      },
+      "description": "Open Options"
+    }
+  },
+  "content_scripts": [{
+    "matches" : ["*://*.youtube.com/*", "*://youtube.com/*"],
+    "js": ["js/youtubeContent.js"]
+  }],
+  "chrome_url_overrides" : {
+    "newtab": "html/newTab.html"
+  },
+  "options_page": "html/options.html",
+  "web_accessible_resources": ["*"],
+  "manifest_version": 2
+}

@@ -1,0 +1,1 @@
+chrome.runtime.getBackgroundPage(function(e){var c="chromeTools_block";blockScreen=$("<div id='"+c+"' class='display'></div>"),$("body").append(blockScreen),keyPressInit(blockScreen),timeLineInit(blockScreen,e),iframe(blockScreen,e)});

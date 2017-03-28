@@ -1,0 +1,34 @@
+#chromeTools_block {
+    all: initial;
+    height: calc(100% - 50px);
+    width: calc(100% - 50px);
+    padding: 25px;
+    z-index: 2147483647;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: white;
+    text-align: center;
+    display: none;
+}
+#chromeTools_block.display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+}
+#chromeTools_iframe {
+    flex: 1 1 auto;
+    display: flex;
+    height: 100%;
+}
+#chromeTools_block .iframe {
+    height: calc(90% - 15px);
+    margin: 30px;
+    border: 1px solid black;
+}
+#chromeTools_block .iframe.hidden {
+	display: none;
+    height: 500px;
+    width: 400px;
+}

@@ -1,0 +1,115 @@
+#chromeTools_calendar {
+    font-family: 'Times New Roman';
+    font-size: 16px;
+}
+#chromeTools_calendar div {
+    text-align: center;
+    -moz-box-sizing: border-box;
+    -ms-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+#chromeTools_calendar div p {
+    position: relative;
+    margin: 0;
+}
+#chromeTools_calendar #container {
+    float: left;
+    display: inline;
+}
+#chromeTools_calendar #header {
+    margin-bottom: 9px;
+}
+#chromeTools_calendar #datepicker {
+    text-align: center;
+    width: 200px;
+}
+#chromeTools_calendar #holder {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    display: flex;
+}
+#chromeTools_calendar .placeholder {
+    display: block;
+    width: 300px;
+}
+#chromeTools_calendar .placeborder {
+    border-top: 1px rgb(228, 228, 228) solid;
+}
+#chromeTools_calendar .class {
+    width: 300px;
+    border: 1px solid black;
+    font-size: 13px;
+    vertical-align: middle;
+    overflow: hidden;
+}
+#chromeTools_calendar .timeline {
+    float: left;
+    display: inline;
+}
+#chromeTools_calendar .timeline div{
+    background-color: rgb(228, 228, 228);
+    display: block;
+    width: 16px;
+    height: 50px;
+}
+#chromeTools_calendar .timeline.right div{
+    width: 8px;
+}
+#chromeTools_calendar .timeline.number div{
+    width: 18px;
+    line-height: 50px;
+}
+#chromeTools_calendar .timeline .half {
+    height: 25px;
+}
+#chromeTools_calendar .timeline .timeslotBorder {
+    border-top: 1px solid black;
+}
+#chromeTools_calendar .timeline.right .halftimeslotBorder {
+    border-top: 1px solid gray;
+}
+#chromeTools_calendar .timeline .bottom {
+    border-top: 1px solid black;
+    height:1px;
+}
+#chromeTools_calendar #side {
+    float: left;
+    height: 600px;
+    border-left: 1px solid rgb(228, 228, 228);
+}
+#chromeTools_calendar .day {
+    float: left;
+    display: inline;
+    border: none;
+}
+#chromeTools_calendar #nowHolder {
+    width: 0px;
+    height: 0px;
+    position: relative;
+}
+#chromeTools_calendar #now {
+    width: 402px;
+    border-top: 1px solid red;
+    position: absolute;
+    display: none;
+    text-align: right;
+    color: red;
+    font-size: 12px;
+}
+#chromeTools_calendar .TUT {
+    border-color: orange;
+}
+#chromeTools_calendar .SEM {
+    border-color: blue;
+}
+#chromeTools_calendar .LEC {
+    border-color: green;
+}
+#chromeTools_calendar .LAB {
+    border-color: red;
+}
+#chromeTools_calendar .TST {
+    border-color: brown;
+}
