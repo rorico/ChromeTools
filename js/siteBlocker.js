@@ -646,9 +646,9 @@ var isBlocked;
 
     //VIP until pagechange
     function finish() {
+        VIP();
         //startTime only changes on newPage
         finishTime = startTime;
-        VIP();
     }
 
     function checkFinish() {
