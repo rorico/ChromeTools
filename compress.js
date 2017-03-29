@@ -31,7 +31,7 @@ mkdir("",function() {
         mkdir(jsFolder,function() {
             //like to set mangle:{toplevel:true}, but can't due to browserAction and schedule requesting specific variables
             var result = UglifyJS.minify(filenames,{output:{ascii_only:true}});
-            writeFile(jsFolder + "/" + backgroundFileName, result.code);
+            writeFile(jsFolder + "/" + backgroundFileName,result.code);
 
             //minify and move the rest of the js files
             readdir(jsFolder,function(files) {
@@ -62,7 +62,7 @@ mkdir("",function() {
         mkdir(cssFolder,function() {
             for (var i = 0 ; i < files.length ; i++) {
                 var mini = Uglifycss.processFiles([cssFolder + "/" + files[i]]);
-                writeFile(cssFolder + "/" + files[i], mini);
+                writeFile(cssFolder + "/" + files[i],mini);
             }
         });
     });
@@ -81,7 +81,7 @@ function inArray(obj,arr) {
 }
 
 function readFile(file,callback) {
-    fs.readFile(file,function(err, data) {
+    fs.readFile(file,function(err,data) {
         if (err) {
             return console.error(err);
         }
