@@ -4,113 +4,137 @@ const Uglifycss = require("uglifycss");
 const fs = require("fs");
 const ncp = require("ncp");
 
-var minifedFolder = "minified";
+var minifiedFolder = "minified";
 var jsFolder = "js";
 var cssFolder = "css";
 var htmlFolder = "html";
 
 //very important minifiedFolder is here, or will get infinite recursive folder
-var special = [htmlFolder,cssFolder,jsFolder,minifedFolder,"Chrome Tools.zip","compress.js","build.bat"];
+var special = [htmlFolder,cssFolder,jsFolder,minifiedFolder,"Chrome Tools.zip","compress.js","build.bat","README.md"];
 
-//copy all files that don't need special attention
-fs.readdir(".", function(err, files) {
-	for (var i = 0 ; i < files.length ; i++) {
-		if (!isSpecial(files[i])) {
-			ncp(files[i], minifedFolder + "/" + files[i], function (err) {
-				if (err) {
-					return console.error(err);
-				}
-			});
-		}
-	}
-	function isSpecial(file) {
-		for (var i = 0 ; i < special.length ; i++) {
-			if (special[i] === file) {
-				return true;
-			}
-		}
-		return false;
-	}
-});
+//makes minifiedFolder
+mkdir("",function() {
+    readFile(htmlFolder + "/background.html",function(data) {
+        var contents = data.toString();
+        var index = 0;
+        var filenames = [];
+        var pattern = /<script src=\"(.*)\"><\/script>\r\n/;
+        var backgroundFileName = "background.js"
+        var result;
+        var startIndex = 0;
+        while (result = pattern.exec(contents)) {
+            contents = contents.substring(0,result.index) + contents.substring(result.index + result[0].length);
+            filenames.push(result[1].substring(1)); //remove leading slash
+            startIndex = result.index;
+        }
 
-//needs subfolders to be there
-//combine all background files into one, and update reference in background.html
-fs.readFile(htmlFolder + "/background.html", function (err, data) {
-    if (err) {
-    	return console.error(err);
-    }
-    var contents = data.toString();
-    var index = 0;
-    var filenames = [];
-    var pattern = /<script src=\"(.*)\"><\/script>\r\n/;
-    var backgroundFileName = "background.js"
-    var result;
-    var startIndex = 0;
-    while (result = pattern.exec(contents)) {
-        contents = contents.substring(0,result.index) + contents.substring(result.index + result[0].length);
-        filenames.push(result[1].substring(1)); //remove leading slash
-        startIndex = result.index;
-    }
-    //like to set mangle:{toplevel:true}, but can't due to browserAction and schedule requesting specific variables
-    var result = UglifyJS.minify(filenames,{output:{ascii_only:true}});
-    fs.writeFile(minifedFolder + "/" + jsFolder + "/" + backgroundFileName, result.code, function() {
-        if (err) {
-          return console.error(err);
-        }
-    });
-    contents = contents.substring(0,startIndex) + "<script src=\"/" + jsFolder + "/" + backgroundFileName + "\"></script>\n" + contents.substring(startIndex);
-    fs.writeFile(minifedFolder + "/" + htmlFolder + "/background.html", contents, function() {
-        if (err) {
-          return console.error(err);
-        }
-    });
-    //minify and move the rest of the js files
-    fs.readdir(jsFolder, function(err, files) {
-        for (var i = 0 ; i < filenames.length ; i++) {
-            for (var j = 0 ; j < files.length ; j++) {
-                //remove leading js/ if jsFolder changes, change
-                if (files[j] === filenames[i].substring(3)) {
-                    files.splice(j,1);
-                    break;
-                }
-            }
-        }
-        for (var i = 0 ; i < files.length ; i++) {
-            var mini = UglifyJS.minify(jsFolder + "/" + files[i],{output:{ascii_only:true}});
-            fs.writeFile(minifedFolder + "/" + jsFolder + "/" + files[i], mini.code, function() {
-                if (err) {
-                  return console.error(err);
+        mkdir(jsFolder,function() {
+            //like to set mangle:{toplevel:true}, but can't due to browserAction and schedule requesting specific variables
+            var result = UglifyJS.minify(filenames,{output:{ascii_only:true}});
+            writeFile(jsFolder + "/" + backgroundFileName, result.code);
+
+            //minify and move the rest of the js files
+            readdir(jsFolder,function(files) {
+                for (var i = 0 ; i < files.length ; i++) {
+                    var filepath = jsFolder + "/" + files[i];
+                    if (!inArray(filepath,filenames)) {
+                        var mini = UglifyJS.minify(filepath,{output:{ascii_only:true}});
+                        writeFile(filepath,mini.code);
+                    }
                 }
             });
-        }
-    });
-    //copy all the html files that aren't background.html
-    fs.readdir(htmlFolder, function(err, files) {
-        for (var j = 0 ; j < files.length ; j++) {
-            //remove leading js/ if jsFolder changes, change
-            if (files[j] === "background.html") {
-                files.splice(j,1);
-                break;
-            }
-        }
-        for (var i = 0 ; i < files.length ; i++) {
-        	copyFile(htmlFolder + "/" + files[i],minifedFolder + "/" + htmlFolder + "/" + files[i]);
-        }
-    });
-});
+        });
 
-//minify and move the css files
-fs.readdir(cssFolder, function(err, files) {
-    for (var i = 0 ; i < files.length ; i++) {
-        var mini = Uglifycss.processFiles([cssFolder + "/" + files[i]]);
-        fs.writeFile(minifedFolder + "/" + cssFolder + "/" + files[i], mini, function() {
-            if (err) {
-              return console.error(err);
+        mkdir(htmlFolder,function() {
+            contents = contents.substring(0,startIndex) + "<script src=\"/" + jsFolder + "/" + backgroundFileName + "\"></script>\n" + contents.substring(startIndex);
+            writeFile(htmlFolder + "/background.html",contents);
+            //copy all the html files that aren't background.html
+            readdir(htmlFolder,function(files) {
+                for (var i = 0 ; i < files.length ; i++) {
+                    if (files[i] !== "background.html") {
+                        copyFile(htmlFolder + "/" + files[i]);
+                    }
+                }
+            });
+        });
+    });
+    readdir(cssFolder,function(files) {
+        mkdir(cssFolder,function() {
+            for (var i = 0 ; i < files.length ; i++) {
+                var mini = Uglifycss.processFiles([cssFolder + "/" + files[i]]);
+                writeFile(cssFolder + "/" + files[i], mini);
             }
         });
-    }
+    });
+    //handle the rest of the not special files
+    readdir(".",function(files) {
+        for (var i = 0 ; i < files.length ; i++) {
+            if (!inArray(files[i],special)) {
+                copyRecursive(files[i]);
+            }
+        }
+    });
 });
 
-function copyFile(f1,f2) {
-	fs.createReadStream(f1).pipe(fs.createWriteStream(f2));
+function inArray(obj,arr) {
+    return (arr.indexOf(obj) !== -1);
+}
+
+function readFile(file,callback) {
+    fs.readFile(file,function(err, data) {
+        if (err) {
+            return console.error(err);
+        }
+        callback(data);
+    });
+}
+
+function readdir(dir,callback) {
+    fs.readdir(dir,function(err,files) {
+        if (err) {
+            return console.error(err);
+        }
+        for (var i = 0 ; i < files.length ; i++) {
+            //remove hidden files
+            if (/^\./.test(files[i])) {
+                files.splice(i,1);
+                i--;
+            }
+        }
+        callback(files);
+    });
+}
+
+//output files will all be in the minified folder
+function output(name) {
+    return minifiedFolder + "/" + name;
+}
+
+function writeFile(file,data) {
+    fs.writeFile(output(file),data,function(err) {
+        if (err) {
+            return console.error(err);
+        }
+    });
+}
+
+function mkdir(name,callback) {
+    fs.mkdir(output(name),function(err) {
+        if (err) {
+            return console.error(err);
+        }
+        callback();
+    });
+}
+
+function copyFile(filename) {
+    fs.createReadStream(filename).pipe(fs.createWriteStream(output(filename)));
+}
+
+function copyRecursive(dir) {
+    ncp(dir,output(dir),function(err) {
+        if (err) {
+            return console.error(err);
+        }
+    });
 }
