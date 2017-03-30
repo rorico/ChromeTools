@@ -27,8 +27,8 @@ var timeLineInit;
                     ["TEMP",tempVIP],
                     ["NO",zero],
                     ["MO",antizero,8],
-                    ["O",skipAd],
-                    ["P",youtube]];
+                    ["P",skipAd],
+                    ["K",youtube]];
 
     //this is the global scope
     timeLineInit = init;
