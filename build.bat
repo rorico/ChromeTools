@@ -1,3 +1,7 @@
-DEL "Chrome Tools.zip"
 node compress.js
-7z a "Chrome Tools.zip" minified -tzip -sdel
+IF %ERRORLEVEL% == 0 (
+	DEL "Chrome Tools.zip"
+	7z a "Chrome Tools.zip" minified -tzip -sdel
+) ELSE (
+	rd /s /q minified
+)

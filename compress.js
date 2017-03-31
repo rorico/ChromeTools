@@ -82,18 +82,14 @@ function inArray(obj,arr) {
 
 function readFile(file,callback) {
     fs.readFile(file,function(err,data) {
-        if (err) {
-            return console.error(err);
-        }
+        checkError(err);
         callback(data);
     });
 }
 
 function readdir(dir,callback) {
     fs.readdir(dir,function(err,files) {
-        if (err) {
-            return console.error(err);
-        }
+        checkError(err);
         for (var i = 0 ; i < files.length ; i++) {
             //remove hidden files
             if (/^\./.test(files[i])) {
@@ -111,18 +107,12 @@ function output(name) {
 }
 
 function writeFile(file,data) {
-    fs.writeFile(output(file),data,function(err) {
-        if (err) {
-            return console.error(err);
-        }
-    });
+    fs.writeFile(output(file),data,checkError);
 }
 
 function mkdir(name,callback) {
     fs.mkdir(output(name),function(err) {
-        if (err) {
-            return console.error(err);
-        }
+        checkError(err);
         callback();
     });
 }
@@ -132,9 +122,13 @@ function copyFile(filename) {
 }
 
 function copyRecursive(dir) {
-    ncp(dir,output(dir),function(err) {
-        if (err) {
-            return console.error(err);
-        }
-    });
+    ncp(dir,output(dir),checkError);
+}
+
+function checkError(err) {
+    if (err) {
+        console.error(err);
+        process.exit(1);
+        return;
+    }
 }
