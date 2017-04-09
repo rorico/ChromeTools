@@ -81,8 +81,6 @@ var scheduleInit = (function() {
         }).datepicker("setDate", now).datepicker("widget").detach().appendTo(container);
         //normally the widget is outside container, move inside
 
-        changeDate(now);
-
         resize = function() {
             if (weekMode) {
                 var width = Math.floor((container.width() - 100) / numDays);
@@ -92,6 +90,7 @@ var scheduleInit = (function() {
                 $("#now").outerWidth(width);
             }
         }
+        changeDate(now);
         return {
             resize: resize
         };
@@ -116,7 +115,7 @@ var scheduleInit = (function() {
         var offset = 0;
         return showSchedule;
         function showSchedule(dates) {
-            weekSchedule(dates,function(info) {     //function set outside
+            weekSchedule(dates,function(info) {
                 var all = $("<div></div>");
                 now = new Date();
                 for (var j = 0 ; j < dates.length ; j++) {
