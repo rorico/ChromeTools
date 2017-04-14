@@ -20,7 +20,7 @@ var timeLineInit;
     var timeCurrentInterval = -1;
 
     //for setup key presses
-    keyPhrases = [["ZYXWVUTSRQPONMLKJIHGFEDCBA",resetTimeLine],
+    keyPhrases = [["RESET",resetTimeLine,20],
                     ["VIP",VIP,18],
                     ["FINISH",finish,10],
                     ["CHANGE",change,6],
