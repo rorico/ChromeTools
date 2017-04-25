@@ -190,14 +190,21 @@ var addNumberListener;
     }
 
     function double(funct,length) {
-        //add another test to actually call vip in background
-        var random = "";
-        var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        for (var i = 0 ; i < length ; i++) {
-            random += possible.charAt(Math.floor(Math.random() * possible.length));
-        }
-        currentPhrase = [random,funct];
-        allowMistakes = true;
-        startShowHotkey(random,false);
+        //add another test
+        sendRequest("randomWord",[length - 2, length + 2],function(random) {
+            random = random.toUpperCase();
+            currentPhrase = [random,funct];
+            allowMistakes = true;
+            startShowHotkey(random,false);
+        })
+    }
+
+    //send requests to background
+    function sendRequest(action,input,callback) {
+        chrome.runtime.sendMessage({
+            from: "browserAction",
+            action: action,
+            input: input
+        },callback);
     }
 })();
