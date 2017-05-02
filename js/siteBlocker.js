@@ -458,22 +458,22 @@ var isBlocked;
 
             function addContentScript(tab,list,i,callback) {
                 var file = list[i];
-                var inject = file.substring(file.lastIndexOf(".")) === ".js" ? chrome.tabs.executeScript : chrome.tabs.insertCSS;
-                inject(tab,{file:file},function() {
-                    if (chrome.runtime.lastError) {
-                        //this happens a lot due to closing of tab
-                        //don't show front end
-                        console.log(chrome.runtime.lastError);
-                        callback(false);
-                        return;
-                    }
-                    i++;
-                    if (list.length === i) {
-                        callback(true);
-                    } else {
-                        addContentScript(tab,list,i,callback);
-                    }
-                });
+                if (file) {
+                    var inject = file.substring(file.lastIndexOf(".")) === ".js" ? chrome.tabs.executeScript : chrome.tabs.insertCSS;
+                    inject(tab,{file:file},function() {
+                        if (chrome.runtime.lastError) {
+                            //this happens a lot due to closing of tab
+                            //don't show front end
+                            console.log(chrome.runtime.lastError);
+                            callback(false);
+                            return;
+                        }
+                        addContentScript(tab,list,i + 1,callback);
+                    });
+                } else {
+                    //if end of list, or if list is empty
+                    callback(true);
+                }
             }
         })();
 
