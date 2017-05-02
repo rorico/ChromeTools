@@ -294,7 +294,7 @@ var isBlocked;
             } else if (time > classStart - new Date()) {
                 displayTime = time = classStart - new Date();
                 countDown = true;
-                blockType = "class";
+                blockType = "schedule";
             } else if (zeroMode) {
                 displayTime = time = 0;
             }
