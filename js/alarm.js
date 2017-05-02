@@ -19,7 +19,7 @@ chrome.browserAction.setBadgeBackgroundColor({color:defaultColor});
 
 //set alarm for every half hour after 10pm
 //sets alarm when it rings so can't stop before
-var sleepAlarmStart = 22;   //10pm
+var sleepAlarmStart = 10;   //10pm
 var sleepAlarmEnd = 6;      //6am
 setSleepAlarm();
 
@@ -54,8 +54,12 @@ function setAlarm(delay,type) {
         if (!alarm) {
             var alarmTime = new Date();
             alarmTime.setMinutes(alarmTime.getMinutes() + delay);
-
-            var destructor = setRing(i,type,delay);
+            var alarmObj = {
+                state: 1,
+                alarmTime: alarmTime,
+                type: type
+            };
+            setRing(alarmObj,i,delay);
 
             alarmCnt++;
             alarmTypeCnt[type]++;
@@ -65,13 +69,6 @@ function setAlarm(delay,type) {
                 chrome.browserAction.setBadgeBackgroundColor({color:typeColors[type]});
                 alarmTypeMax = type;
             }
-
-            var alarmObj = {
-                state: 1,
-                alarmTime: alarmTime,
-                type: type,
-                destructor: destructor
-            };
             alarms[i] = alarmObj;
             sendRequest("setAlarm",[i,+alarmTime,type]);
             return;
@@ -79,11 +76,11 @@ function setAlarm(delay,type) {
     }
 }
 
-function setRing(alarmNumber,type,delay) {
+function setRing(alarmObj,alarmNumber,delay) {
     var timeout;    //hold this outside for destructor
     var ringer = setTimer(function() {
         ringingCnt++;
-        alarms[alarmNumber].state = 2;
+        alarmObj.state = 2;
         playAlarmCheck = true;
         sendRequest("ringing",alarmNumber);
         //don't ring if chrome is closed
@@ -93,16 +90,16 @@ function setRing(alarmNumber,type,delay) {
                 audio.play();
 
                 //sleep auto snoozes
-                if (type === 1) {
+                if (alarmObj.type === 1) {
                     timeout = setTimeout(function(){
-                        removeAlarm(alarmNumber,type);
+                        removeAlarm(alarmNumber,alarmObj.type);
                         setAlarm(5,1);
                     },5000);//5 seconds
                 }
             }
         });
     },delay * 60000);
-    return function() {
+    alarmObj.destructor = function() {
         clearTimer(ringer);
         clearTimeout(timeout);
     };
@@ -114,6 +111,7 @@ function removeAlarm(alarmNumber,type) {
     //type 2 needs specific call
     var alarm = alarms[alarmNumber];
     if (alarm && ((typeof type === "undefined" && alarm.type !== 2) || alarm.type == type)) {
+        // this should be alarm.type
         alarmTypeCnt[type]--;
         //if no alarms left
         if (!--alarmCnt) {
