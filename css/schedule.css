@@ -88,12 +88,12 @@
     width: 0px;
     height: 0px;
     position: relative;
+    display: none;
 }
 #chromeTools_calendar #now {
     width: 402px;
     border-top: 1px solid red;
     position: absolute;
-    display: none;
     text-align: right;
     color: red;
     font-size: 12px;

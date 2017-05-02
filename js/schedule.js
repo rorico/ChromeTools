@@ -123,10 +123,7 @@ var scheduleInit = (function() {
                     var holder = $("<div class='day'></div>");
                     offset = 0;
                     if (sameDay(dates[j],now)) {
-                        nowTimeOffset = 50 * !weekMode;
-                        holder.prepend("<div id='nowHolder'><div id='now'></div></div>");
-                        clearTimeout(nowTimer);
-                        showNow();
+                        showNow(holder,weekMode);
                     }
                     if (!today.length) {
                         addTimeSlot(holder,"placeholder placeborder",endTime - startTime,["No Classes Today"]);
@@ -193,11 +190,20 @@ var scheduleInit = (function() {
         }
     })();
 
-    function showNow() {
-        if ($("#now").size()) {
+    function showNow(container,weekMode) {
+        clearTimeout(nowTimer);
+        var holder = $("<div id='nowHolder'></div>");
+        var ele = $("<div id='now'></div>");
+        holder.html(ele);
+        container.prepend(holder);
+        nowTimeOffset = 50 * !weekMode;
+        holder.css("left",-nowTimeOffset);
+        moveNow();
+
+        function moveNow() {
             now = new Date();
-            if (now.getHours() < startTime/100 || now.getHours() >= endTime/100) {
-                $("#now").css("display","none");
+            if (now.getHours() < startTime/60 || now.getHours() >= endTime/60) {
+                holder.css("display","none");
             } else {
                 var text = (now.getHours())+":"+("0"+now.getMinutes()).slice(-2)+"AM";
                 if (now.getHours()>=13) {
@@ -205,14 +211,12 @@ var scheduleInit = (function() {
                 } else if (now.getHours()==12) {
                     text = (now.getHours())+":"+("0"+now.getMinutes()).slice(-2)+"PM";
                 }
-                var position = Math.floor((now.getHours() - (startTime)/100) * 50 + now.getMinutes()/1.2);
-                $("#now").css("display","block");
-                $("#now").text(text);
-                $("#nowHolder").css("top",position);
-                $("#nowHolder").css("left",-nowTimeOffset);
+                var position = Math.floor((now.getHours() - (startTime)/60) * 50 + now.getMinutes()/1.2);
+                ele.text(text);
+                holder.css("display","block").css("top",position);
                 var delay = 60000 - now.getSeconds()*1000 - now.getMilliseconds();
                 nowTimer = setTimeout(function() {
-                    showNow();
+                    moveNow();
                 },delay);
             }
         }
