@@ -258,21 +258,39 @@ var timeLineInit;
 
     function updateTimeLine() {
         clearInterval(updateTimeLineInterval);
+        var oldestEle;
+        var oldestWidth;
+        var newestEle;
+        var newestWidth;
         var delay = timeLineLength/parentWidth;
+        // use outerwidth, width doesn't seem to account for border-box
         updateTimeLineInterval = setInterval(function() {
-            var newEle = $("#timeLine div:last-child");
-            newEle.width(newEle.width() + 1);
-            if (!newEle.hasClass("timeLineBlock") && newEle.width() >= 3) {
-                newEle.addClass("timeLineBlock");
+            var timeLine = $("#timeLine").children();
+            var newest = timeLine.last();
+            if (!newest.is(newestEle)) {
+                newestEle = newest;
+                newestWidth = newestEle.outerWidth();
             }
-            var oldestEle = $("#timeLine div:first-child");
-            //oldest has 0 width, remove
-            //note if div has no children (ie removed), need length check, or will run into infinite loop
-            while(oldestEle.length && oldestEle.width() <= 0) {
-                oldestEle.remove();
-                oldestEle = $("#timeLine div:first-child");
+            newestWidth++;
+            newestEle.outerWidth(newestWidth);
+            if (!newestEle.hasClass("timeLineBlock") && newestWidth >= 3) {
+                newestEle.addClass("timeLineBlock");
             }
-            oldestEle.width(oldestEle.width() - 1);
+
+            for (var i = 0 ; i < timeLine.length ; i++) {
+                var oldest = $(timeLine[i]);
+                if (!oldest.is(oldestEle)) {
+                    oldestEle = oldest;
+                    oldestWidth = oldestEle.outerWidth();
+                }
+                if (oldestWidth) {
+                    break;
+                } else {
+                    oldest.remove();
+                }
+            }
+            oldestWidth--;
+            oldestEle.outerWidth(oldestWidth);
             if (oldestEle.hasClass("timeLineBlock") && oldestEle.width() < 3) {
                 oldestEle.removeClass("timeLineBlock");
             }
