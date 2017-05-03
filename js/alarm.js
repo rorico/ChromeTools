@@ -19,7 +19,7 @@ chrome.browserAction.setBadgeBackgroundColor({color:defaultColor});
 
 //set alarm for every half hour after 10pm
 //sets alarm when it rings so can't stop before
-var sleepAlarmStart = 10;   //10pm
+var sleepAlarmStart = 22;   //10pm
 var sleepAlarmEnd = 6;      //6am
 setSleepAlarm();
 
