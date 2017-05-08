@@ -258,25 +258,18 @@ var timeLineInit;
 
     function updateTimeLine() {
         clearInterval(updateTimeLineInterval);
+        //this is used for sort of caching, making sure that overall changes are affected by small errors
         var oldestEle;
         var oldestWidth;
         var newestEle;
         var newestWidth;
         var delay = timeLineLength/parentWidth;
+        //TODO Fix if the entire thing is 1 thing
         // use outerwidth, width doesn't seem to account for border-box
         updateTimeLineInterval = setInterval(function() {
             var timeLine = $("#timeLine").children();
-            var newest = timeLine.last();
-            if (!newest.is(newestEle)) {
-                newestEle = newest;
-                newestWidth = newestEle.outerWidth();
-            }
-            newestWidth++;
-            newestEle.outerWidth(newestWidth);
-            if (!newestEle.hasClass("timeLineBlock") && newestWidth >= 3) {
-                newestEle.addClass("timeLineBlock");
-            }
 
+            //get first and last element, and they widths
             for (var i = 0 ; i < timeLine.length ; i++) {
                 var oldest = $(timeLine[i]);
                 if (!oldest.is(oldestEle)) {
@@ -289,10 +282,24 @@ var timeLineInit;
                     oldest.remove();
                 }
             }
-            oldestWidth--;
-            oldestEle.outerWidth(oldestWidth);
-            if (oldestEle.hasClass("timeLineBlock") && oldestEle.width() < 3) {
-                oldestEle.removeClass("timeLineBlock");
+            var newest = timeLine.last();
+            if (!newest.is(newestEle)) {
+                newestEle = newest;
+                newestWidth = newestEle.outerWidth();
+            }
+
+            //if the entire thing is 1 block, don't change anything, size stays constant
+            if (!oldestEle.is(newestEle)) {
+                oldestWidth--;
+                oldestEle.outerWidth(oldestWidth);
+                if (oldestEle.hasClass("timeLineBlock") && oldestEle.width() < 3) {
+                    oldestEle.removeClass("timeLineBlock");
+                }
+                newestWidth++;
+                newestEle.outerWidth(newestWidth);
+                if (!newestEle.hasClass("timeLineBlock") && newestWidth >= 3) {
+                    newestEle.addClass("timeLineBlock");
+                }
             }
         },delay);
     }
