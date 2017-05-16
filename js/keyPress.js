@@ -198,7 +198,6 @@ var addNumberListener;
         sendRequest("randomWord",[length - 2, length + 2],function(random) {
             random = random.toUpperCase();
             currentPhrase = [random,funct];
-            allowMistakes = true;
             startShowHotkey(random,false);
         })
     }
