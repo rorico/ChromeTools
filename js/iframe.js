@@ -1,11 +1,9 @@
 var iframe;
 (function() {
     var iframeId = "chromeTools_iframe";
-    var width;
-    var height = 0;
     var loading = [];
     var loadingTime = 2000; //2 secs
-
+    var ASPECT_RATIO = [16,12];
     iframe = init;
 
     function init(container,background) {
@@ -22,14 +20,28 @@ var iframe;
         return {
             resize: resize,
             update: update
-        }
+        };
 
         function resize() {
-            var newWidth = Math.min(400,roundTo(container.width()/iframeInfo.length - 120,50));
-            if (newWidth !== width) {
-                width = newWidth;
-                $("#" + iframeId + " .iframe").width(width);
+            var iframe = $("#" + iframeId + " .iframe");
+            var iframeHolder = $("#" + iframeId);
+            var maxWidth = Math.min(container.width()/iframeInfo.length - 60,450);
+            var width = roundTo(maxWidth,ASPECT_RATIO[1]);
+            var height = width / ASPECT_RATIO[1] * ASPECT_RATIO[0];
+            //this sets up max height
+            iframeHolder.css("flex-basis",(height + 60) + "px");
+            var trueHeight = iframe.height();
+            if (trueHeight < height) {
+                height = roundTo(trueHeight,ASPECT_RATIO[0]);
+                iframeHolder.css("flex-basis",(height + 60) + "px");
+                width = height / ASPECT_RATIO[0] * ASPECT_RATIO[1];
             }
+            iframe.width(width);
+        }
+
+        function roundTo(num,round) {
+            var div = num % round;
+            return num - div;
         }
     }
 
@@ -86,7 +98,7 @@ var iframe;
                         this.remove();
                     }
                 });
-            }
+            };
             ele.load(function() {
                 stopIframeFocus(ele);
                 check();
@@ -145,12 +157,4 @@ var iframe;
         }
         return stopIframeFocus;
     })();
-
-    function roundTo(num,round) {
-        var div = num % round;
-        if (div > round/2) {
-            num += round;
-        }
-        return num - div;
-    }
 })();
