@@ -169,21 +169,25 @@ var addNumberListener;
                             $("#phrase").css("opacity",opacity);
                             if (opacity <= 0) {
                                 clearInterval(disappearInterval);
-                                clearHotkey();
+                                removeHotkey();
                             }
                         },delay);
                     } else {
-                        clearHotkey();
+                        removeHotkey();
                     }
                 },disapperTime);
             }
         } else {
-            clearHotkey();
+            removeHotkey();
         }
     }
 
-    function clearHotkey() {
+    function removeHotkey() {
         $("#phrase").remove();
+        clearHotkey();
+    }
+
+    function clearHotkey() {
         currentPhrase = 0;
         phraseIndex = 0;
         allowMistakes = false;
