@@ -6,16 +6,16 @@
     z-index: 2147483647;
     position: fixed;
     top: 0;
-    left: 0;
+    left: 100%;
     background-color: white;
     text-align: center;
-    display: none;
-}
-#chromeTools_block.display {
     display: flex;
     align-items: center;
     justify-content: center;
     flex-direction: column;
+}
+#chromeTools_block.display {
+    left: 0;
 }
 #chromeTools_iframe {
     flex: 0 1 auto;
