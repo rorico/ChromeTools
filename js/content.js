@@ -1,6 +1,7 @@
 var blockId = "chromeTools_block";
 var hidden = false;
 var blockObj;
+var oldFocus;
 
 var blockScreen = $("<div id='" + blockId + "'></div>");
 $("body").append(blockScreen);
@@ -35,7 +36,8 @@ function block(type,info,callback) {
     if (currentType(type,info)) {
         blockObj.update(info);
     }
-
+    //hold focus to give back when unblocking
+    oldFocus = document.activeElement;
     blockScreen.addClass("display").focus();
     hidden = false;
     callback(true);
@@ -96,6 +98,9 @@ function init(type,info) {
 
 function unblock() {
     $("#" + blockId).removeClass("display").blur();
+    if (oldFocus) {
+        oldFocus.focus();
+    }
     hidden = true;
 }
 
