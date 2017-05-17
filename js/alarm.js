@@ -85,16 +85,20 @@ function setRing(alarmObj,alarmNumber,delay) {
         sendRequest("ringing",alarmNumber);
         //don't ring if chrome is closed
         //likely want to change the way this is done later
-        chrome.windows.getAll(function(windows){
+        chrome.windows.getAll(function(windows) {
             if (windows.length) {
                 audio.play();
 
                 //sleep auto snoozes
                 if (alarmObj.type === 1) {
-                    timeout = setTimeout(function(){
+                    timeout = setTimeout(function() {
                         removeAlarm(alarmNumber,alarmObj.type);
                         setAlarm(5,1);
                     },5000);//5 seconds
+                } else if (alarmObj.type === 2) {
+                    timeout = setTimeout(function() {
+                        removeAlarm(alarmNumber,alarmObj.type);
+                    },audio.duration * 1000);
                 }
             }
         });

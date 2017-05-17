@@ -36,7 +36,6 @@ var isBlocked;
 
     timeLineLength = 1800000; // 30 mins
     var startingTimeLeft = 300000; // 5 mins
-    var secondLimit = 300000; //5 mins
     var VIPlength = 20000; // 20s
     var zeroLength = 1800000; // 30 mins
     var tolerance = 2000; // 2s
@@ -276,12 +275,7 @@ var isBlocked;
         //ideally, shows lowest timeLeft at all points
         function timeLeftOutput() {
             sendContent("timer",timeLeft);
-            var displayTime = timeLeft - (wastingTime ? new Date() - startTime : 0);
-            //give wastingTime 2 more time, but do not show in badge
-            //note the returntime isn't optimized to for this, but that should be fine.
-            //also, need to handle blocked pages
-            var thisWasting = isBlocked() ? matchesURL(getBlockedUrl()) : wastingTime;
-            var time = displayTime + (thisWasting === 2 ? secondLimit : 0);
+            var time = timeLeft - (wastingTime ? new Date() - startTime : 0);
             var endTime = 0;
             var countDown = wastingTime;
             var blockType = "time";
@@ -289,14 +283,14 @@ var isBlocked;
             if (VIPtab === tabId && !tempVIPstartTime && !(finishTime && !checkFinish())) {
                 //if tempVIPstartTime is not set, VIP isn't temp
                 //if finishTime is set, but checkFinish is false, isn't actually VIP
-                displayTime = time = Infinity;
+                time = Infinity;
                 countDown = false;
             } else if (time > classStart - new Date()) {
-                displayTime = time = classStart - new Date();
+                time = classStart - new Date();
                 countDown = true;
                 blockType = "schedule";
             } else if (zeroMode) {
-                displayTime = time = 0;
+                time = 0;
             }
 
             //don't even bother if more time left than limit
@@ -306,12 +300,12 @@ var isBlocked;
                 if (!countDown && !wastingTime && time > endTime) {
                     endTime = time;
                 }
-                displayTime = time = VIPtimeLeft;
+                time = VIPtimeLeft;
                 countDown = true;
                 //when this turns to 0, will not show actual time left, may want to fix this later
             }
             blockTab(time,countDown,blockType);
-            countDownTimer(displayTime,endTime,countDown);
+            countDownTimer(time,endTime,countDown);
         }
 
         function countDownTimer(time,endTime,countDown) {
@@ -380,17 +374,25 @@ var isBlocked;
         };
 
         function block(tabId,time,blockType) {
-            var start = +new Date();
-            var delay = Math.max(time - tolerance,quickTabTime);
-            blockTimer = setTimeout(function() {
-                //note, won't inject if already injected
-                injectScripts(tabId,blockType,function(ready) {
-                    if (ready) {
-                        var elapsed = +new Date() - start;
-                        blockSite(tabId,blockType,time - elapsed);
-                    }
-                });
-            },delay);
+            // instead of increasing time for wastingTime 2, let it finish, but ring once
+            if (wastingTime === 2 && time > VIPlength) {
+                blockTimer = setTimeout(function() {
+                    finish();
+                    setAlarm(0,2);
+                },time);
+            } else {
+                var start = +new Date();
+                var delay = Math.max(time - tolerance,quickTabTime);
+                blockTimer = setTimeout(function() {
+                    //note, won't inject if already injected
+                    injectScripts(tabId,blockType,function(ready) {
+                        if (ready) {
+                            var elapsed = +new Date() - start;
+                            blockSite(tabId,blockType,time - elapsed);
+                        }
+                    });
+                },delay);
+            }
         }
 
         var injectScripts = (function() {
@@ -549,11 +551,11 @@ var isBlocked;
         isBlocked = function() {
             //I'm just gonna assume there is no usual url named "Blocked"
             return url === "Blocked";
-        }
+        };
 
         getBlockedUrl = function() {
             return blockedUrl;
-        }
+        };
     })();
 
     function returnTime() {
