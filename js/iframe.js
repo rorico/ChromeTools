@@ -2,6 +2,7 @@ var iframe;
 (function() {
     var iframeId = "chromeTools_iframe";
     var loading = [];
+    var width;
     var loadingTime = 2000; //2 secs
     var ASPECT_RATIO = [16,12];
     iframe = init;
@@ -26,7 +27,7 @@ var iframe;
             var iframe = $("#" + iframeId + " .iframe");
             var iframeHolder = $("#" + iframeId);
             var maxWidth = Math.min(container.width()/iframeInfo.length - 60,450);
-            var width = roundTo(maxWidth,ASPECT_RATIO[1]);
+            width = roundTo(maxWidth,ASPECT_RATIO[1]);
             var height = width / ASPECT_RATIO[1] * ASPECT_RATIO[0];
             //this sets up max height
             iframeHolder.css("flex-basis",(height + 60) + "px");
