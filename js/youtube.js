@@ -35,7 +35,7 @@ var youtubeVideoNames = [];
             youtubeTabs(function(tabs) {
                 //if tabs is empty, nothing to play anyways
                 var states = [];
-                var numPause = 0;
+                var numPlaying = 0;
 
                 var cnt = 0;
                 var num = tabs.length;
@@ -61,7 +61,7 @@ var youtubeVideoNames = [];
                         } else {
                             states[i] = state;
                             if (state === "play") {
-                                numPause++;
+                                numPlaying++;
                             }
                             cnt++;
                             if (cnt === num) {
@@ -72,18 +72,29 @@ var youtubeVideoNames = [];
                 }
 
                 function action() {
-                    if (numPause) {
-                        emptyList();
-                        for (var i = 0 ; i < num ; i++) {
-                            if (states[i] === "play") {
-                                var tab = tabs[i];
-                                var data = {action:"pause"};
+                    if (numPlaying) {
+                        if (!index || index === "K") {
+                            emptyList();
+                            for (var i = 0 ; i < num ; i++) {
+                                if (states[i] === "play") {
+                                    var tab = tabs[i];
+                                    var data = {action:"pause"};
 
-                                chrome.tabs.sendMessage(tab.id,data);
-                                addTab(tab.id,tab.title);
+                                    chrome.tabs.sendMessage(tab.id,data);
+                                    addTab(tab.id,tab.title);
+                                }
+                            }
+                            sendRequest("youtube");
+                        } else {
+                            for (var i = 0 ; i < num ; i++) {
+                                if (states[i] === "play") {
+                                    var tab = tabs[i];
+                                    var data = {action:index === "J" ? "back" : "forward"};
+
+                                    chrome.tabs.sendMessage(tab.id,data);
+                                }
                             }
                         }
-                        sendRequest("youtube");
                     } else if (youtubeVideoIds.length) {
                         playAll();
                         sendRequest("youtube");

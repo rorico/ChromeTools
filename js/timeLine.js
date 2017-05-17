@@ -28,7 +28,9 @@ var timeLineInit;
                     ["NO",zero],
                     ["MO",antizero,8],
                     ["P",skipAd],
-                    ["K",youtube]];
+                    ["K",youtubeK],
+                    ["J",youtubeJ],
+                    ["L",youtubeL]];
 
     //this is the global scope
     timeLineInit = init;
@@ -343,8 +345,14 @@ var timeLineInit;
         sendRequest("antizero");
     }
 
-    function youtube() {
-        sendRequest("youtube");
+    function youtubeJ() {
+        sendRequest("youtube","J");
+    }
+    function youtubeK() {
+        sendRequest("youtube","K");
+    }
+    function youtubeL() {
+        sendRequest("youtube","L");
     }
 
     function skipAd() {

@@ -49,6 +49,11 @@ function play() {
     return false;
 }
 
+function changeTime(dir) {
+    //simulate youtube j and l keys
+    p.currentTime = p.currentTime + dir*10;
+}
+
 function getState() {
     if (p.paused) {
         return "pause";
@@ -76,6 +81,12 @@ chrome.runtime.onMessage.addListener(function listener(a, b, c) {
             break;
         case "skipAd":
             c(skipAd());
+            break;
+        case "forward":
+            changeTime(1);
+            break;
+        case "back":
+            changeTime(-1);
             break;
         case "getState":
             c(getState());
