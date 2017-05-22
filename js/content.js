@@ -62,6 +62,7 @@ function currentType(type,info) {
 }
 
 function init(type,info) {
+    blockScreen.empty();
     blockObj = {type:type};
     var nullFunct = function() {};
     if (type === "time") {
