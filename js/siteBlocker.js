@@ -6,6 +6,7 @@ var title = "";
 var timeLeft = 0;
 var timeLine = [];
 var timeLineLength;
+var noBlocks = [];
 
 //functions
 var isBlocked;
@@ -18,11 +19,9 @@ var isBlocked;
     var tempVIPtimer = -1;
     var tempVIPstartTime = 0;
     var finishTime = 0;
-    var zeroMode = false;
-    var zeroTimer = -1;
     var nextTime = 0;
-    var classes = [];
-    var classStart = Infinity;
+    var nextNoBlock = Infinity;
+    var noBlockTimer;
     //sites that will block after time spent
     var urls = [[
         "*://reddit.com/*","*://*.reddit.com/*",
@@ -44,6 +43,7 @@ var isBlocked;
         timeLineLength = 120000; // 2 mins
         startingTimeLeft = 60000; // 1 mins
     }
+
     timeLeft = startingTimeLeft;
     
     //functions in their own closure
@@ -68,52 +68,71 @@ var isBlocked;
     //set-up first time when opened
     startTimeLine();
 
+    function addNoBlock(start,stop,info) {
+        var index = 0;
+        for (var i = 0; i < noBlocks.length ; i++) {
+            var block = noBlocks[i];
+            if (start < block[0]) {
+                index = i;
+                break;
+            }
+        }
+        noBlocks.splice(index,0,[start,stop,info]);
+        if (index === 0) {
+            noBlockReminder();
+        }
+    }
+
+    function checkNoBlock(date) {
+        for (var i = 0; i < noBlocks.length ; i++) {
+            var block = noBlocks[i];
+            if (date < block[1]) {
+                return block;
+            } else {
+                break;
+            }
+        }
+        //could go to next day, for now, don't do that
+        return [Infinity,Infinity];
+    }
+
+    function noBlockReminder() {
+        clearTimer(noBlockTimer);
+        var next = checkNoBlock(new Date());
+        if (isFinite(next[0])) {
+            var now = new Date();
+            var inBlock = next[0] < now;
+            nextNoBlock = inBlock ? next[1] : next[0] - startingTimeLeft;
+            noBlockTimer = setTimer(function check() {
+                nextNoBlock = inBlock ? next[1] : next[0] - timeLeft;
+                var time = nextNoBlock - new Date();
+                //if timing is off
+                if (time > 0) {
+                    noBlockTimer = setTimer(function() {
+                        check();
+                    },time);
+                } else {
+                    timeLeftOutput();
+                    noBlockReminder();
+                }
+            },nextNoBlock - new Date());
+        } else {
+            nextNoBlock = Infinity;
+        }
+    }
+
     //gets run when schedule gets loaded in ScheduleInfo.js
     function setupClass(today) {
         var now = new Date();
         var position = UTCtoMilitary(now);
         for (var i = 0 ; i < today.length ; i++) {
             if (position < today[i][0][2]) {
-                classes.push([today[i][0][1],today[i][0][2]]);
+                addNoBlock(
+                    militaryToUTC(today[i][0][1]),
+                    militaryToUTC(today[i][0][2]),
+                    today
+                );
             }
-        }
-        if (classes.length) {
-            classStart = militaryToUTC(classes[0][0]);
-            classReminder(classStart - now - startingTimeLeft);
-        }
-    }
-
-    //for before class, show how much time left
-    function classReminder(delay) {
-        if (classes.length) {
-            setTimer(function() {
-                var time = classStart - new Date() - timeLeft;
-                //if timing is off
-                if (time > 0) {
-                    classReminder(time);
-                } else {
-                    var keepGoing = true;
-                    var now = new Date();
-                    var position = UTCtoMilitary(now);
-                    if (position > classes[0][1]) {
-                        classes.splice(0,1);
-                        if (classes.length) {
-                            classStart = militaryToUTC(classes[0][0]);
-                            time = classStart - now - startingTimeLeft;
-                        } else {
-                            //could go to next day, for now, don't do that
-                            classStart = Infinity;
-                            keepGoing = false;
-                        }
-                    } else {
-                        time = militaryToUTC(classes[0][1]) - now;
-                    }
-                    timeLeftOutput();
-                    if (keepGoing) {
-                        classReminder(time);
-                    }
-                }
-            },delay);
         }
     }
 
@@ -275,7 +294,8 @@ var isBlocked;
         //ideally, shows lowest timeLeft at all points
         function timeLeftOutput() {
             sendContent("timer",timeLeft);
-            var time = timeLeft - (wastingTime ? new Date() - startTime : 0);
+            var now = new Date();
+            var time = timeLeft - (wastingTime ? now - startTime : 0);
             var endTime = 0;
             var countDown = wastingTime;
             var blockType = "time";
@@ -285,16 +305,24 @@ var isBlocked;
                 //if finishTime is set, but checkFinish is false, isn't actually VIP
                 time = Infinity;
                 countDown = false;
-            } else if (time > classStart - new Date()) {
-                time = classStart - new Date();
+            }
+
+            //just check if reminder is needed for this time.
+            if (date > nextNoBlock) {
+                noBlockReminder();
+            }
+            var classInfo = checkNoBlock(now);
+            var classTime = classInfo[0] - now;
+            if (time > classTime) {
+                time = classTime;
                 countDown = true;
-                blockType = "schedule";
-            } else if (zeroMode) {
-                time = 0;
+                if (classInfo[2]) {
+                    blockType = "schedule";
+                }
             }
 
             //don't even bother if more time left than limit
-            var VIPtimeLeft = VIPlength - new Date() + tempVIPstartTime;
+            var VIPtimeLeft = VIPlength - now + tempVIPstartTime;
             if (VIPtab === tabId && time < VIPtimeLeft) {
                 //if not wasting time, vip will countDown, but stop when reach timeLeft
                 if (!countDown && !wastingTime && time > endTime) {
@@ -696,17 +724,28 @@ var isBlocked;
     }
 
     function zero() {
-        clearTimer(zeroTimer);
-        zeroMode = true;
+        var now = +new Date();
+        var currentNo = checkNoBlock(now);
+        var end = now + zeroLength;
+        //if not a schedule block
+        if (isFinite(currentNo[0]) && !currentNo[2]) {
+            //extend current no block
+            currentNo[1] = end;
+        } else {
+            addNoBlock(now, now + zeroLength);
+        }
         timeLeftOutput();
-        zeroTimer = setTimer(function() {
-            zeroMode = false;
-        },zeroLength);
+        noBlockReminder();
     }
 
     function antizero() {
-        clearTimer(zeroTimer);
-        zeroMode = false;
+        var now = +new Date();
+        var currentNo = checkNoBlock(now);
+        //if not a schedule block
+        if (isFinite(currentNo[0]) && !currentNo[2]) {
+            currentNo[1] = now;
+        }
         timeLeftOutput();
+        noBlockReminder();
     }
 })();
