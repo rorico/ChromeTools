@@ -387,8 +387,11 @@ var isBlocked;
                     //note, won't inject if already injected
                     injectScripts(tabId,blockType,function(ready) {
                         if (ready) {
-                            var elapsed = +new Date() - start;
-                            blockSite(tabId,blockType,time - elapsed);
+                            var delay = time - new Date() + start;
+                            prepareBlock(tabId,blockType,delay);
+                            blockTimer = setTimeout(function() {
+                                blockSite(tabId,blockType);
+                            },delay);
                         }
                     });
                 },delay);
@@ -479,7 +482,7 @@ var isBlocked;
             }
         })();
 
-        function blockSite(tab,type,blockTime) {
+        function prepareBlock(tab,type,blockTime) {
             if (tab === tabId) {
                 //iframes need time to load, load beforehand if can
                 var info = {};
@@ -493,36 +496,36 @@ var isBlocked;
                 }
                 var data = {action:"prepare",info:info,type:type};
                 chrome.tabs.sendMessage(tab,data);
+            }
+        }
 
-                blockTimer = setTimeout(function() {
-                    //if in the time to block, tab changes, don't block
-                    if (tab === tabId) {
-                        blockedTab = tab;
-                        blocked = true;
-                        blockType = type;
-                        if (blockType === "time") {
-                            info = {
-                                timeLeft: timeLeft,
-                                startTime: +startTime,
-                                wastingTime: wastingTime,
-                                url: url,
-                                title: title,
-                                timeLine: timeLine,
-                                timeLineLength: timeLineLength
-                            };
-                        }
-                        data = {action:"block",info:info,type:type};
-                        chrome.tabs.sendMessage(tab,data,function(blocked) {
-                            //when page is actually blocked, update timeline
-                            if (blocked && tab === tabId) {
-                                blockedUrl = url;
-                                blockedTitle = title;
-                                handleNewPage("Blocked","Blocked");
-                                storeData("redirect",[+new Date(),url]);
-                            }
-                        });
+        function blockSite(tab,type) {
+            //if in the time to block, tab changes, don't block
+            if (tab === tabId) {
+                blockedTab = tab;
+                blocked = true;
+                blockType = type;
+                if (blockType === "time") {
+                    info = {
+                        timeLeft: timeLeft,
+                        startTime: +startTime,
+                        wastingTime: wastingTime,
+                        url: url,
+                        title: title,
+                        timeLine: timeLine,
+                        timeLineLength: timeLineLength
+                    };
+                }
+                data = {action:"block",info:info,type:type};
+                chrome.tabs.sendMessage(tab,data,function(blocked) {
+                    //when page is actually blocked, update timeline
+                    if (blocked && tab === tabId) {
+                        blockedUrl = url;
+                        blockedTitle = title;
+                        handleNewPage("Blocked","Blocked");
+                        storeData("redirect",[+new Date(),url]);
                     }
-                },blockTime);
+                });
             }
         }
 
