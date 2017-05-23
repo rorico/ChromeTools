@@ -69,7 +69,7 @@ var isBlocked;
     startTimeLine();
 
     function addNoBlock(start,stop,info) {
-        var index = 0;
+        var index = noBlocks.length;
         for (var i = 0; i < noBlocks.length ; i++) {
             var block = noBlocks[i];
             if (start < block[0]) {
