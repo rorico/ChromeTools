@@ -88,8 +88,6 @@ var isBlocked;
             var block = noBlocks[i];
             if (date < block[1]) {
                 return block;
-            } else {
-                break;
             }
         }
         //could go to next day, for now, don't do that
