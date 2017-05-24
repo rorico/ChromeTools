@@ -532,7 +532,7 @@ var isBlocked;
                 blocked = true;
                 blockType = type;
                 if (blockType === "time") {
-                    info = {
+                    var info = {
                         timeLeft: timeLeft,
                         startTime: +startTime,
                         wastingTime: wastingTime,
