@@ -77,7 +77,8 @@ var isBlocked;
                 break;
             }
         }
-        noBlocks.splice(index,0,[start,stop,info]);
+        //need timestamp to be jsonifiable (when sent to content scripts)
+        noBlocks.splice(index,0,[+start,+stop,info]);
         if (index === 0) {
             noBlockReminder();
         }
@@ -122,14 +123,14 @@ var isBlocked;
     //gets run when schedule gets loaded in ScheduleInfo.js
     function setupClass(today) {
         var now = new Date();
-        var position = UTCtoMilitary(now);
+        //want history of previous classes
+        var position = now - timeLineLength;
         for (var i = 0 ; i < today.length ; i++) {
-            if (position < today[i][0][2]) {
-                addNoBlock(
-                    militaryToUTC(today[i][0][1]),
-                    militaryToUTC(today[i][0][2]),
-                    today
-                );
+            var thisClass = today[i];
+            var end = militaryToUTC(thisClass[0][2]);
+            if (position < end) {
+                var start = militaryToUTC(thisClass[0][1])
+                addNoBlock(start,end,thisClass);
             }
         }
     }
@@ -144,10 +145,6 @@ var isBlocked;
         ret.setSeconds(0);
         ret.setMilliseconds(0);
         return ret;
-    }
-
-    function UTCtoMilitary(time) {
-        return time.getHours()*60 + time.getMinutes();
     }
 
     function startTimeLine() {
@@ -540,7 +537,8 @@ var isBlocked;
                         url: url,
                         title: title,
                         timeLine: timeLine,
-                        timeLineLength: timeLineLength
+                        timeLineLength: timeLineLength,
+                        noBlocks: noBlocks
                     };
                 }
                 data = {action:"block",info:info,type:type};

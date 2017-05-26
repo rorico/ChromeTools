@@ -15,14 +15,24 @@
     position: relative;
     margin: 0;
 }
-#chromeTools_timeLine #timeLine {
-    height: 50px;
-    float: left;
-}
 #chromeTools_timeLine #timeLineHolder {
     border: 1px solid black;
     border-radius: 2px;
     display: inline-block;
+    overflow: hidden;
+}
+#chromeTools_timeLine #timeLine {
+    height: 50px;
+    position: relative;
+}
+#chromeTools_timeLine #timeLine > div {
+    position: absolute;
+    height: 50px;
+    white-space: nowrap;
+    width: 100%;
+}
+#chromeTools_timeLine #timeLines-0 {
+    opacity: 0;
 }
 #chromeTools_timeLine .timeLine {
     height: 50px;
@@ -41,6 +51,13 @@
 }
 #chromeTools_timeLine .wasting2 {
     background-color: #8C0000;
+}
+#chromeTools_timeLine .timeLineBlock.noBlock {
+    border: 2px solid;
+    overflow: hidden;
+    line-height: 47px;
+    color: grey;
+    vertical-align: top;
 }
 #chromeTools_timeLine #info {      
     word-wrap: break-word;

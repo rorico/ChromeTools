@@ -7,6 +7,7 @@ var timeLineInit;
     var url;
     var title;
     var timeCurrent;
+    var noBlocks;
     var countDownTimer = -1;
 
     var timeLine;
@@ -46,7 +47,14 @@ var timeLineInit;
         }
         top += "</div>";
         bot += "</div>";
-        var html = "<div id='" + timeLineId + "'><div id='timeLeft'></div><div id='timeLineHolder'>" + top + "<div id='timeLine'></div>" + bot + "</div><div id='info'></div></div>";
+
+        var center = "<div id='timeLine'>";
+        //0 is last, so its on top
+        for (var i = 2 ; i >= 0 ; i--) {
+            center += "<div id='timeLines-" + i + "'></div>";
+        }
+        center += "</div>";
+        var html = "<div id='" + timeLineId + "'><div id='timeLeft'></div><div id='timeLineHolder'>" + top + center + bot + "</div><div id='info'></div></div>";
         container.append(html);
 
         $(".axisPart").outerWidth(parentWidth/6);
@@ -64,7 +72,7 @@ var timeLineInit;
             if (newWidth !== parentWidth) {
                 parentWidth = newWidth;
                 $(".axisPart").outerWidth(parentWidth/6);
-                $("#timeLine").empty();
+                $("#timeLine > div").empty();
                 timeLineCreate();
             }
         };
@@ -107,77 +115,100 @@ var timeLineInit;
         wastingTime = background.wastingTime;
         url = background.url;
         title = background.title;
+        noBlocks = background.noBlocks || [];
         timeCurrent = new Date() - startTime;
         //if empty, assume reset
         //deep copy to not affect it outside of function call
         timeLine = background.timeLine ? JSON.parse(JSON.stringify(background.timeLine)) : [];
-        $("#timeLine").empty();
+        $("#timeLine > div").empty();
         timeLineCreate();
     }
 
     function timeLineCreate() {
+        var now = new Date();
+        var oldest = now - timeLineLength;
         timeLineLeft = parentWidth;
         offset = 0;
         currentTimePiece = -1;
         timeLineOffset = 0;
         timeCurrent = new Date() - startTime;
+        var $timeLine = $("#timeLines-0");
 
-        if (addTimeLine(-1,false,timeCurrent,wastingTime)) {
+        if (add(-1,startTime,timeCurrent,wastingTime)) {
+            var last;
             for (var i = 0; i < timeLine.length ; i++) {
-                if (!addTimeLine(i,false,timeLine[i][0],timeLine[i][1])) {
+                if (!add(i,timeLine[i][4],timeLine[i][0],timeLine[i][1])) {
+                    last = timeLine[i][4];
                     break;
                 }
             }
-            //fill in rest
-            addTimeLine(-2,false);
+            if (!last) {
+                var lastTime = timeLine[timeLine.length-1];
+                //only really happens if no timeline
+                last = lastTime ? lastTime[4] : now;
+            }
+            if (last > oldest) {
+                //fill in rest
+                add(-2,oldest,last - oldest);
+            }
         }
+        addNoBlocks();
         displayInfo(-1);
         updateTimeLine();
+
+        //returns true if not done
+        function add(index,start,time,wastingTime) {
+            var ret = true;
+            if (start < oldest) {
+                time +=  start - oldest;
+                ret = false;
+            }
+            addTimeLine(index,time,wastingTime);
+            return ret;
+        }
+    }
+    //returns true if not done
+    function addTimeLine(index,time,wastingTime,first) {
+        var classes = index === -2 ? "" : "wasting" + wastingTime;
+        var block = addBlock($("#timeLines-0"),index,time,"","",first);
+        if (block) {
+            if (index !== -2) {
+                setClick(block,getIndex(index));
+            }
+            var copy = block.clone().removeAttr("id").addClass(classes);
+            appendBlock($("#timeLines-2"),copy,first);
+        }
     }
 
-    //returns true if not done
-    function addTimeLine(index,first,time,wastingTime) {
-        var width = 0;
-        if (index === -2) {
-            width = timeLineLeft;
-        } else {
-            width = time/timeLineLength * parentWidth + offset;
-        }
+    function addBlock(holder,index,time,classes,id,first) {
+        var width = timeToWidth(time) + offset;
         offset = width % 1;
         width = Math.floor(width);
         //if smaller than 1px, don't bother adding, unless at very start or end (these will change size)
         if (width < 1 && index !== -1) {
-            offset += width;
-            return true;
-        }
-        var ret = true;
-        if (width >= timeLineLeft) {
-            width = timeLineLeft;
-            timeLineLeft = 0;
-            ret = false;
-        } else {
-            timeLineLeft -= width;
+            return;
         }
 
-        var classes = "timeLine";
-        if (index !== -2) {
-            classes += " wasting" + wastingTime;
-            if (width >= 3) {
-                classes += " timeLineBlock";
-            }
+        classes = classes ? classes + " timeLine" : "timeLine";
+        if (width >= 3) {
+            classes += " timeLineBlock";
         }
 
-        var timeLineEntry = $("<div style='width:" + width + "px;' class='" + classes + "' id='" + getTimeLineId(index) + "'></div>");
+        var timeLineEntry = $("<div style='width:" + width + "px;' class='" + classes + (id ? "' id='" + id : "") + "'></div>");
+        appendBlock(holder,timeLineEntry,first);
+        return timeLineEntry;
+    }
+
+    function appendBlock(holder,entry,first) {
         if (first) {
-            $("#timeLine").append(timeLineEntry);
+            holder.append(entry);
         } else {
-            $("#timeLine").prepend(timeLineEntry);
+            holder.prepend(entry);
         }
+    }
 
-        if (index !== -2) {
-            setClick(timeLineEntry,getIndex(index));
-        }
-        return ret;
+    function timeToWidth(time) {
+        return time/timeLineLength * parentWidth;
     }
 
     function getIndex(index) {
@@ -225,6 +256,54 @@ var timeLineInit;
         $("#" + getTimeLineId(index)).removeClass("wasting" + prev).addClass("wasting0");
     }
 
+    //TODO: adding a noblock change current open
+    function addNoBlocks() {
+        if (noBlocks.length) {
+            offset = 0;
+            var $timeLine = $("#timeLines-1").addClass("offset");
+            var now = new Date();
+            var start = now - timeLineLength;
+            var end = start;
+            var first = noBlocks[0];
+            if (first[0] < start) {
+                $timeLine.css("left","-" + timeToWidth(start - first[0]) + "px");
+                start = first[0];
+            }
+            for (var i = 0; i < noBlocks.length ; i++) {
+                var block = noBlocks[i];
+                if (start < block[0]) {
+                    addBlock($timeLine,-1,block[0] - start,"","",true);
+                    start = block[0];
+                    end = block[1];
+                } else if (start < block[1]) {
+                    end = block[1];
+                } else {
+                    //this means its envelopped in another block
+                    continue;
+                }
+                var ele = addBlock($timeLine,-1,end - start,"noBlock","",true);
+                var color = "blue";
+                var info = block[2];
+                if (info) {
+                    //TODO: change this based on class later
+                    color = "red";
+                    var startI = 2;
+                    do {
+                        var text = "";
+                        for (var j = 0 ; j < startI ; j++) {
+                            text += info[2][j];
+                        }
+                        ele.html(text);
+                        startI--;
+                        //if text is too large for div
+                    } while(ele[0].scrollWidth > ele.width());
+                }
+                ele.css({"border-color":color});
+                start = end;
+            }
+        }
+    }
+
     function newPage(input) {
         startTime = input.startTime;
         wastingTime = input.wastingTime;
@@ -232,7 +311,7 @@ var timeLineInit;
         title = input.title;
         timeLine.unshift(input.newest);
         timeLineOffset++;
-        addTimeLine(-1,true,new Date() - startTime,wastingTime);
+        addTimeLine(-1,0,wastingTime,true);
         displayInfo(-1);
     }
 
@@ -261,46 +340,54 @@ var timeLineInit;
     function updateTimeLine() {
         clearInterval(updateTimeLineInterval);
         //this is used for sort of caching, making sure that overall changes are affected by small errors
-        var oldestEle;
-        var oldestWidth;
-        var newestEle;
-        var newestWidth;
+        var oldestEles = [];
+        var oldestWidths = [];
+        var newestEles = [];
+        var newestWidths = [];
         var delay = timeLineLength/parentWidth;
         //TODO Fix if the entire thing is 1 thing
         // use outerwidth, width doesn't seem to account for border-box
         updateTimeLineInterval = setInterval(function() {
-            var timeLine = $("#timeLine").children();
+            var timeLines = $("#timeLine > div");
+            for (var j = 0 ; j < timeLines.length ; j++) {
+                var holder = $(timeLines[j]);
+                var timeLine = holder.children();
+                if (holder.hasClass("offset")) {
+                    //assume in px
+                    holder.css("left",parseInt(holder.css("left")) - 1);
+                } else if (timeLine.length) {
+                    //get first and last element, and they widths
+                    for (var i = 0 ; i < timeLine.length ; i++) {
+                        var oldest = $(timeLine[i]);
+                        if (!oldest.is(oldestEles[j])) {
+                            oldestEles[j] = oldest;
+                            oldestWidths[j] = oldestEles[j].outerWidth();
+                        }
+                        if (oldestWidths[j]) {
+                            break;
+                        } else {
+                            oldest.remove();
+                        }
+                    }
+                    var newest = timeLine.last();
+                    if (!newest.is(newestEles[j])) {
+                        newestEles[j] = newest;
+                        newestWidths[j] = newestEles[j].outerWidth();
+                    }
 
-            //get first and last element, and they widths
-            for (var i = 0 ; i < timeLine.length ; i++) {
-                var oldest = $(timeLine[i]);
-                if (!oldest.is(oldestEle)) {
-                    oldestEle = oldest;
-                    oldestWidth = oldestEle.outerWidth();
-                }
-                if (oldestWidth) {
-                    break;
-                } else {
-                    oldest.remove();
-                }
-            }
-            var newest = timeLine.last();
-            if (!newest.is(newestEle)) {
-                newestEle = newest;
-                newestWidth = newestEle.outerWidth();
-            }
-
-            //if the entire thing is 1 block, don't change anything, size stays constant
-            if (!oldestEle.is(newestEle)) {
-                oldestWidth--;
-                oldestEle.outerWidth(oldestWidth);
-                if (oldestEle.hasClass("timeLineBlock") && oldestEle.width() < 3) {
-                    oldestEle.removeClass("timeLineBlock");
-                }
-                newestWidth++;
-                newestEle.outerWidth(newestWidth);
-                if (!newestEle.hasClass("timeLineBlock") && newestWidth >= 3) {
-                    newestEle.addClass("timeLineBlock");
+                    //if the entire thing is 1 block, don't change anything, size stays constant
+                    if (!oldestEles[j].is(newestEles[j])) {
+                        oldestWidths[j]--;
+                        oldestEles[j].outerWidth(oldestWidths[j]);
+                        if (oldestEles[j].hasClass("timeLineBlock") && oldestEles[j].width() < 3) {
+                            oldestEles[j].removeClass("timeLineBlock");
+                        }
+                        newestWidths[j]++;
+                        newestEles[j].outerWidth(newestWidths[j]);
+                        if (!newestEles[j].hasClass("timeLineBlock") && newestWidths[j] >= 3) {
+                            newestEles[j].addClass("timeLineBlock");
+                        }
+                    }
                 }
             }
         },delay);
