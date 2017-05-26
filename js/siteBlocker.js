@@ -303,33 +303,34 @@ var isBlocked;
                 //if finishTime is set, but checkFinish is false, isn't actually VIP
                 time = Infinity;
                 countDown = false;
-            }
+            } else {
+                //just check if reminder is needed for this time.
+                if (date > nextNoBlock) {
+                    noBlockReminder();
+                }
+                var classInfo = checkNoBlock(now);
+                var classTime = classInfo[0] - now;
+                if (time > classTime) {
+                    time = classTime;
+                    countDown = true;
+                    if (classInfo[2]) {
+                        blockType = "schedule";
+                    }
+                }
 
-            //just check if reminder is needed for this time.
-            if (date > nextNoBlock) {
-                noBlockReminder();
-            }
-            var classInfo = checkNoBlock(now);
-            var classTime = classInfo[0] - now;
-            if (time > classTime) {
-                time = classTime;
-                countDown = true;
-                if (classInfo[2]) {
-                    blockType = "schedule";
+                //don't even bother if more time left than limit
+                var VIPtimeLeft = VIPlength - now + tempVIPstartTime;
+                if (VIPtab === tabId && time < VIPtimeLeft) {
+                    //if not wasting time, vip will countDown, but stop when reach timeLeft
+                    if (!countDown && !wastingTime && time > endTime) {
+                        endTime = time;
+                    }
+                    time = VIPtimeLeft;
+                    countDown = true;
+                    //when this turns to 0, will not show actual time left, may want to fix this later
                 }
             }
-
-            //don't even bother if more time left than limit
-            var VIPtimeLeft = VIPlength - now + tempVIPstartTime;
-            if (VIPtab === tabId && time < VIPtimeLeft) {
-                //if not wasting time, vip will countDown, but stop when reach timeLeft
-                if (!countDown && !wastingTime && time > endTime) {
-                    endTime = time;
-                }
-                time = VIPtimeLeft;
-                countDown = true;
-                //when this turns to 0, will not show actual time left, may want to fix this later
-            }
+            
             blockTab(time,countDown,blockType);
             countDownTimer(time,endTime,countDown);
         }
