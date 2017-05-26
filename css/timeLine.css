@@ -45,23 +45,24 @@
 #chromeTools_timeLine #info {      
     word-wrap: break-word;
 }
+#chromeTools_timeLine .axisHold {
+    display: flex;
+}
 #chromeTools_timeLine .axisPart {
     display: inline-block;
-    float: left;
     padding: 0;
     height: 3px;
     width: 60px;
     border-right: 1px solid black;
 }
-#chromeTools_timeLine .axisPart.top {
+#chromeTools_timeLine .axisPart:last-child {
+    border-right: 0;
+}
+#chromeTools_timeLine #axisTop .axisPart {
     border-bottom: 1px solid black;
 }
-#chromeTools_timeLine .axisPart.bot {
+#chromeTools_timeLine #axisBot .axisPart {
     border-top: 1px solid black;
-}
-#chromeTools_timeLine .axisPart.end {
-    width: 60px;
-    border-right: 0;
 }
 #chromeTools_keyPress {
     position: absolute;

@@ -38,11 +38,11 @@ var timeLineInit;
     function init(container,background) {
         parentWidth = calcWidth(container.width());
 
-        var top = "<div id='axisTop'>";
-        var bot = "<div id='axisBot'>";
+        var top = "<div id='axisTop' class='axisHold'>";
+        var bot = "<div id='axisBot' class='axisHold'>";
         for (var i = 0 ; i < 6 ; i++) {
-            top += "<div class='axisPart top" + (i === 5 ? " end" : "") + "'></div>";
-            bot += "<div class='axisPart bot" + (i === 5 ? " end" : "") + "'></div>";
+            top += "<div class='axisPart'></div>";
+            bot += "<div class='axisPart'></div>";
         }
         top += "</div>";
         bot += "</div>";
