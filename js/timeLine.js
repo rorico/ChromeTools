@@ -94,6 +94,12 @@ var timeLineInit;
                     case "newPage":
                         newPage(a.input);
                         break;
+                    case "addNoBlock":
+                        changeNoBlock(a.input);
+                        break;
+                    case "stopNoBlock":
+                        changeNoBlock(a.input);
+                        break;
                 }
             }
         });
@@ -256,7 +262,6 @@ var timeLineInit;
         $("#" + getTimeLineId(index)).removeClass("wasting" + prev).addClass("wasting0");
     }
 
-    //TODO: adding a noblock change current open
     function addNoBlocks() {
         if (noBlocks.length) {
             offset = 0;
@@ -268,6 +273,8 @@ var timeLineInit;
             if (first[0] < start) {
                 $timeLine.css("left","-" + timeToWidth(start - first[0]) + "px");
                 start = first[0];
+            } else {
+                $timeLine.css("left",0);
             }
             for (var i = 0; i < noBlocks.length ; i++) {
                 var block = noBlocks[i];
@@ -302,6 +309,13 @@ var timeLineInit;
                 start = end;
             }
         }
+    }
+
+    function changeNoBlock(nos) {
+        console.log(nos);
+        noBlocks = nos;
+        $("#timeLines-1").empty();
+        addNoBlocks();
     }
 
     function newPage(input) {

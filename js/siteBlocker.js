@@ -78,7 +78,12 @@ var isBlocked;
             }
         }
         //need timestamp to be jsonifiable (when sent to content scripts)
-        noBlocks.splice(index,0,[+start,+stop,info]);
+        var entry = [+start,+stop,info];
+        noBlocks.splice(index,0,entry);
+
+        //TODO better way to do this, for now redo entire thing
+        console.log("sent")
+        sendContent("addNoBlock",noBlocks);
         if (index === 0) {
             noBlockReminder();
         }
@@ -741,6 +746,8 @@ var isBlocked;
         //if not a schedule block
         if (isFinite(currentNo[0]) && !currentNo[2]) {
             currentNo[1] = now;
+            //TODO better way to do this, for now redo entire thing
+            sendContent("stopNoBlock",noBlocks);
         }
         timeLeftOutput();
         noBlockReminder();
