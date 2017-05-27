@@ -82,7 +82,6 @@ var isBlocked;
         noBlocks.splice(index,0,entry);
 
         //TODO better way to do this, for now redo entire thing
-        console.log("sent")
         sendContent("addNoBlock",noBlocks);
         if (index === 0) {
             noBlockReminder();
