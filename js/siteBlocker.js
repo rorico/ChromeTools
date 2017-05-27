@@ -331,7 +331,7 @@ var isBlocked;
                     //when this turns to 0, will not show actual time left, may want to fix this later
                 }
             }
-            
+
             blockTab(time,countDown,blockType);
             countDownTimer(time,endTime,countDown);
         }
