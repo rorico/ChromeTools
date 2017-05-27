@@ -402,8 +402,8 @@ var isBlocked;
         };
 
         function block(tabId,time,blockType) {
-            // instead of increasing time for wastingTime 2, let it finish, but ring once
-            if (wastingTime === 2 && time > VIPlength) {
+            //instead of increasing time for wastingTime 2, let it finish, but ring once
+            if (wastingTime === 2 && time + +new Date() - startTime > VIPlength + tolerance) {
                 blockTimer = setTimeout(function() {
                     finish();
                     setAlarm(0,2);
