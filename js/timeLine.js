@@ -181,7 +181,7 @@ var timeLineInit;
             if (index !== -2) {
                 setClick(block,getIndex(index));
             }
-            var copy = block.clone().removeAttr("id").addClass(classes);
+            var copy = block.clone().attr("id",getTimeLineId(index)).addClass(classes);
             appendBlock($("#timeLines-2"),copy,first);
         }
     }
