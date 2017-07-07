@@ -41,7 +41,7 @@ function clearTimer(handlerId) {
             for (var i = 0 ; i < timerQueue.length ; i++) {
                 if (handlerId === timerQueue[i][0]) {
                     timerQueue.splice(i,1);
-                    if (i === 0) {
+                    if (i === 0 && timerQueue.length) {
                         chrome.alarms.clearAll();
                         chrome.alarms.create("timer",{when:timerQueue[0][1]});
                     }
@@ -60,7 +60,8 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
         var cnt = 0;
         for (var i = 0 ; i < timerQueue.length ; i++) {
             if (timerQueue[i][1] < threshold) {
-                timerHandlers[timerQueue[i][0]] = setTimeout(timerQueue[i][2],timerQueue[i][1] - new Date());
+                //change the handler to how it would be when creating a timeout, so it can be cleared properly
+                timerHandlers[timerQueue[i][0]] = [0,setTimeout(timerQueue[i][2],timerQueue[i][1] - new Date())];
                 cnt++;
             } else {
                 break;
