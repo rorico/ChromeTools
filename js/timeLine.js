@@ -23,8 +23,8 @@ var timeLineInit;
     //for setup key presses
     keyPhrases = [["RESET",resetTimeLine,20],
                     ["VIP",VIP,18],
-                    ["FINISH",finish,10],
-                    ["CHANGE",change,6],
+                    ["FINISH",finish,15],
+                    ["CHANGE",change,10],
                     ["TEMP",tempVIP],
                     ["NO",zero],
                     ["MO",antizero,8],

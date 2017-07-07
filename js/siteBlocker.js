@@ -680,13 +680,9 @@ var isBlocked;
 
     //VIP until pagechange
     function finish() {
-        //check if page is just started, and don't allow
-        //timeLine[0][0] should be the timespent on thing that was blocked
-        if ((isBlocked() ? timeLine[0][0] : new Date() - startTime) > VIPlength + tolerance) {
-            VIP();
-            //startTime only changes on newPage
-            finishTime = startTime;
-        }
+        VIP();
+        //startTime only changes on newPage
+        finishTime = startTime;
     }
 
     function checkFinish() {
@@ -700,6 +696,8 @@ var isBlocked;
     }
 
     function tempVIP() {
+        //so that you can't auto finish from temps
+        handleNewPage(url,title);
         makeCurrentTabVIP();
         tempVIPstartTime = +new Date();
         tempVIPtimer = setTimeout(function() {
