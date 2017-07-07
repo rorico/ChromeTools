@@ -24,7 +24,9 @@ var sleepAlarmEnd = 6;      //6am
 setSleepAlarm();
 
 addMessageListener({
-    "stopAllAlarms": stopAllAlarms,
+    "stopAllAlarms": function(a) {
+        stopAllAlarms(a.input);
+    },
     "snooze": snooze,
     "setAlarm": function(a) {
         setAlarm(a.input,0);
