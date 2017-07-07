@@ -117,8 +117,7 @@ function removeAlarm(alarmNumber,type) {
     //type 2 needs specific call
     var alarm = alarms[alarmNumber];
     if (alarm && ((typeof type === "undefined" && alarm.type !== 2) || alarm.type == type)) {
-        // this should be alarm.type
-        alarmTypeCnt[type]--;
+        alarmTypeCnt[alarm.type]--;
         //if no alarms left
         if (!--alarmCnt) {
             alarmTypeMax = -1;
