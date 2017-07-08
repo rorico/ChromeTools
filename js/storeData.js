@@ -2,7 +2,6 @@ var storeData;
 var getData;
 (function() {
     var suf = "s";
-    var indexSuf = "Indexes";
     var metaSuf = "Meta";
     storeData = function(name,data) {
         var storeName = name + suf;
@@ -35,31 +34,34 @@ var getData;
     };
 
     getData = function(name,callback) {
-        var indexName = name + indexSuf;
         var metaName = name + metaSuf;
-        get([indexName,metaName], function(item) {
-            var indexes = item[indexName] || [];
+        get(metaName, function(item) {
             var metaData = item[metaName] || {};
+            var min = 0;
+            var max = 0;
+            //this really generally always happen
             if (metaData.sync) {
-                indexes = indexes.slice(metaData.sync[0],metaData.sync[1]);
+                min = metaData.sync[0];
+                max = metaData.sync[1];
             }
-            indexes.push(name + suf);
-            get(indexes, callback);
+            get(getIndexes(name,min,max), callback);
         });
     };
 
     function moveData(name,info,data) {
-        var indexName = name + indexSuf;
         var metaName = name + metaSuf;
-        get([indexName,metaName], function(items) {
-            var indexes = items[indexName] || [];
+        get(metaName, function(items) {
             var metaData = items[metaName] || {};
+            //move older things to localStorage - unlimited storage
+            //hold [start,end] values, end is 1 more than largest
+            if (!metaData.sync) {
+                metaData.sync = [0,0];
+            }
 
+            var next = metaData.sync[1];
             var store = function() {
-                var dataName = name + "_" + indexes.length;
-                indexes.push(dataName);
-                var setObj = {indexes:indexes};
-                setObj[indexName] = indexes;
+                var dataName = name + "_" + next;
+                var setObj = {};
                 setObj[name + suf] = [];
                 setObj[dataName] = info;
                 setObj[metaName] = metaData;
@@ -67,11 +69,6 @@ var getData;
                 storeData(name,data);
             };
 
-            //move older things to localStorage - unlimited storage
-            //hold [start,end] values, end is 1 more than largest
-            if (!metaData.sync) {
-                metaData.sync = [0,indexes.length];
-            }
             metaData.sync[1]++;
             //limit to 5 blocks of data
             var overflow = metaData.sync[1] - metaData.sync[0] - 3;
@@ -81,7 +78,8 @@ var getData;
                     metaData.local = [0,0];
                 }
                 metaData.local[1] += overflow;
-                var removeIndexes = indexes.slice(metaData.sync[0],metaData.sync[0] + overflow);
+
+                var removeIndexes = getIndexes(name,metaData.sync[0],metaData.sync[0] + overflow);
                 metaData.sync[0] += overflow;
                 get(removeIndexes, function(removedItems) {
                     setLocal(removedItems);
@@ -92,6 +90,14 @@ var getData;
                 store();
             }
         });
+    }
+
+    function getIndexes(name,min,max) {
+        var indexes = [];
+        for (var i = min ; i < max ; i++) {
+            indexes.push(name + "_" + i);
+        }
+        return indexes;
     }
 
     function set(obj,callback,onerror) {
