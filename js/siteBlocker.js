@@ -157,7 +157,7 @@ var isBlocked;
                 var activeTab = tabs[0];
                 tabId = activeTab.id;
                 windowId = activeTab.windowId;
-                handleNewPage(activeTab.url,activeTab.title);
+                handleNewTab(activeTab);
             }
         });
     }
@@ -165,14 +165,14 @@ var isBlocked;
     chrome.tabs.onActivated.addListener(function(activeInfo) {
         tabId = activeInfo.tabId;
         chrome.tabs.get(activeInfo.tabId, function(tab) {
-            handleNewPage(tab.url,tab.title);
+            handleNewTab(tab);
         });
     });
 
     chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {
         if (tabId === id && changeInfo) {
             if (changeInfo.status === "loading") {
-                handleNewPage(tab.url,tab.title);
+                handleNewTab(tab);
             } else if (changeInfo.title) {
                 title = changeInfo.title;
             }
@@ -196,7 +196,7 @@ var isBlocked;
                     if (tabs.length) {
                         var activeTab = tabs[0];
                         tabId = activeTab.id;
-                        handleNewPage(activeTab.url,activeTab.title);
+                        handleNewTab(activeTab);
                     } else {
                         log("window empty tab");
                     }
@@ -206,7 +206,12 @@ var isBlocked;
         }
     });
 
-    function handleNewPage(newUrl,newTitle) {
+    //just a wrapper for handleNewPage
+    function handleNewTab(tab) {
+        handleNewPage(tab.url,tab.title,tab.incognito);
+    }
+
+    function handleNewPage(newUrl,newTitle,incognito) {
         //handle previous page
         var newWasting = matchesURL(newUrl);
         var timeSpent = new Date() - startTime;
@@ -226,8 +231,9 @@ var isBlocked;
         //handle new page
         startTime = new Date();     //consider converting to integer right here
         wastingTime = newWasting;
-        url = newUrl;
-        title = newTitle;
+        //TODO, make incognito a setting
+        url = incognito ? "incognito" : newUrl;
+        title = incognito ? "incognito" : newTitle;
         timeLeftOutput();
 
         //to browserAction, doesn't happen often, but can happen
