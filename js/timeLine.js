@@ -190,6 +190,8 @@ var timeLineInit;
             }
             var copy = block.clone().attr("id",getTimeLineId(index)).addClass(classes);
             appendBlock(find("#timeLines-2"),copy,first);
+            //hide the top layer
+            block.addClass("placeholder");
         }
     }
 
@@ -286,7 +288,7 @@ var timeLineInit;
             for (var i = 0; i < noBlocks.length ; i++) {
                 var block = noBlocks[i];
                 if (start < block[0]) {
-                    addBlock($timeLine,-1,block[0] - start,"","",true);
+                    addBlock($timeLine,-1,block[0] - start,"placeholder","",true);
                     start = block[0];
                     end = block[1];
                 } else if (start < block[1]) {

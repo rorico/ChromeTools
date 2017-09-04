@@ -31,9 +31,6 @@
     white-space: nowrap;
     width: 100%;
 }
-#chromeTools_timeLine #timeLines-0 {
-    opacity: 0;
-}
 #chromeTools_timeLine .timeLine {
     height: 50px;
     border-top: 1px solid white;
@@ -42,6 +39,9 @@
 }
 #chromeTools_timeLine .timeLineBlock {
     border: 1px solid white;
+}
+#chromeTools_timeLine .placeholder {
+    opacity: 0;
 }
 #chromeTools_timeLine .wasting0 {
     background-color: black;
@@ -59,7 +59,7 @@
     color: grey;
     vertical-align: top;
 }
-#chromeTools_timeLine #info {      
+#chromeTools_timeLine #info {
     word-wrap: break-word;
 }
 #chromeTools_timeLine .axisHold {
