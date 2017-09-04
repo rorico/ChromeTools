@@ -20,6 +20,8 @@ var timeLineInit;
     var updateTimeLineInterval = -1;
     var timeCurrentInterval = -1;
 
+    var find;
+
     //for setup key presses
     keyPhrases = [["RESET",resetTimeLine,20],
                     ["VIP",VIP,18],
@@ -37,6 +39,10 @@ var timeLineInit;
     timeLineInit = init;
 
     function init(container,background) {
+        find = function(sel) {
+            return container.find(sel);
+        }
+
         parentWidth = calcWidth(container.width());
 
         var top = "<div id='axisTop' class='axisHold'>";
@@ -57,7 +63,7 @@ var timeLineInit;
         var html = "<div id='" + timeLineId + "'><div id='timeLeft'></div><div id='timeLineHolder'>" + top + center + bot + "</div><div id='info'></div></div>";
         container.append(html);
 
-        $(".axisPart").outerWidth(parentWidth/6);
+        find(".axisPart").outerWidth(parentWidth/6);
 
         timeLineLength = background.timeLineLength;
         setTimeLine(background);
@@ -71,11 +77,12 @@ var timeLineInit;
             var newWidth = calcWidth(container.width());
             if (newWidth !== parentWidth) {
                 parentWidth = newWidth;
-                $(".axisPart").outerWidth(parentWidth/6);
-                $("#timeLine > div").empty();
+                find(".axisPart").outerWidth(parentWidth/6);
+                find("#timeLine > div").empty();
                 timeLineCreate();
             }
         };
+
 
         //get from background to display
         chrome.runtime.onMessage.addListener(function(a, b, c) {
@@ -126,7 +133,7 @@ var timeLineInit;
         //if empty, assume reset
         //deep copy to not affect it outside of function call
         timeLine = background.timeLine ? JSON.parse(JSON.stringify(background.timeLine)) : [];
-        $("#timeLine > div").empty();
+        find("#timeLine > div").empty();
         timeLineCreate();
     }
 
@@ -138,7 +145,7 @@ var timeLineInit;
         currentTimePiece = -1;
         timeLineOffset = 0;
         timeCurrent = new Date() - startTime;
-        var $timeLine = $("#timeLines-0");
+        var $timeLine = find("#timeLines-0");
 
         if (add(-1,startTime,timeCurrent,wastingTime)) {
             var last;
@@ -176,13 +183,13 @@ var timeLineInit;
     //returns true if not done
     function addTimeLine(index,time,wastingTime,first) {
         var classes = index === -2 ? "" : "wasting" + wastingTime;
-        var block = addBlock($("#timeLines-0"),index,time,"","",first);
+        var block = addBlock(find("#timeLines-0"),index,time,"","",first);
         if (block) {
             if (index !== -2) {
                 setClick(block,getIndex(index));
             }
             var copy = block.clone().attr("id",getTimeLineId(index)).addClass(classes);
-            appendBlock($("#timeLines-2"),copy,first);
+            appendBlock(find("#timeLines-2"),copy,first);
         }
     }
 
@@ -244,28 +251,28 @@ var timeLineInit;
             timeCurrent = new Date() - startTime;
             var delay = 1000 - (timeCurrent%1000);
             if (repeat) {
-                $("#timeSpend").html(MinutesSecondsFormat(timeCurrent,true));
+                find("#timeSpend").html(MinutesSecondsFormat(timeCurrent,true));
             } else {
                 info = formatInfo(url,timeCurrent,title);
-                $("#info").html(info);
+                find("#info").html(info);
             }
             timeCurrentInterval = setTimeout(function() {
                 displayInfo(i,true);
             },delay);
         } else {
             info = formatInfo(timeLine[i][2],timeLine[i][0],timeLine[i][3]);
-            $("#info").html(info);
+            find("#info").html(info);
         }
     }
 
     function changeTimeLine(index,prev) {
-        $("#" + getTimeLineId(index)).removeClass("wasting" + prev).addClass("wasting0");
+        find("#" + getTimeLineId(index)).removeClass("wasting" + prev).addClass("wasting0");
     }
 
     function addNoBlocks() {
         if (noBlocks.length) {
             offset = 0;
-            var $timeLine = $("#timeLines-1").addClass("offset");
+            var $timeLine = find("#timeLines-1").addClass("offset");
             var now = new Date();
             var start = now - timeLineLength;
             var end = start;
@@ -314,7 +321,7 @@ var timeLineInit;
     function changeNoBlock(nos) {
         console.log(nos);
         noBlocks = nos;
-        $("#timeLines-1").empty();
+        find("#timeLines-1").empty();
         addNoBlocks();
     }
 
@@ -342,7 +349,7 @@ var timeLineInit;
 
     //not exactly accurate, not too important
     function countDownFunction(time) {
-        $("#timeLeft").html(MinutesSecondsFormat(time,false));
+        find("#timeLeft").html(MinutesSecondsFormat(time,false));
         if (wastingTime && time>0) {
             var delay = (time-1)%1000+1;
             countDownTimer = setTimeout(function() {
@@ -362,7 +369,7 @@ var timeLineInit;
         //TODO Fix if the entire thing is 1 thing
         // use outerwidth, width doesn't seem to account for border-box
         updateTimeLineInterval = setInterval(function() {
-            var timeLines = $("#timeLine > div");
+            var timeLines = find("#timeLine > div");
             for (var j = 0 ; j < timeLines.length ; j++) {
                 var holder = $(timeLines[j]);
                 var timeLine = holder.children();
