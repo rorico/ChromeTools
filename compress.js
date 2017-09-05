@@ -22,15 +22,18 @@ mkdir("",function() {
         var backgroundFileName = "background.js"
         var result;
         var startIndex = 0;
+        var code = "";
         while (result = pattern.exec(contents)) {
             contents = contents.substring(0,result.index) + contents.substring(result.index + result[0].length);
+            var file = result[1].substring(1);
+            code += fs.readFileSync(file);
             filenames.push(result[1].substring(1)); //remove leading slash
             startIndex = result.index;
         }
 
         mkdir(jsFolder,function() {
             //like to set mangle:{toplevel:true}, but can't due to browserAction and schedule requesting specific variables
-            var result = UglifyJS.minify(filenames,{output:{ascii_only:true}});
+            var result = UglifyJS.minify(code,{output:{ascii_only:true}});
             writeFile(jsFolder + "/" + backgroundFileName,result.code);
 
             //minify and move the rest of the js files
