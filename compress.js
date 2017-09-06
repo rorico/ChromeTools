@@ -41,7 +41,7 @@ mkdir("",function() {
                 for (var i = 0 ; i < files.length ; i++) {
                     var filepath = jsFolder + "/" + files[i];
                     if (!inArray(filepath,filenames)) {
-                        var mini = UglifyJS.minify(filepath,{output:{ascii_only:true}});
+                        var mini = UglifyJS.minify(fs.readFileSync(filepath),{output:{ascii_only:true}});
                         writeFile(filepath,mini.code);
                     }
                 }
