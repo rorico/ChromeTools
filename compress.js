@@ -41,7 +41,8 @@ mkdir("",function() {
                 for (var i = 0 ; i < files.length ; i++) {
                     var filepath = jsFolder + "/" + files[i];
                     if (!inArray(filepath,filenames)) {
-                        var mini = UglifyJS.minify(fs.readFileSync(filepath),{output:{ascii_only:true}});
+                        //TODO: update this to not use Sync, need to cast to string as well
+                        var mini = UglifyJS.minify("" + fs.readFileSync(filepath),{output:{ascii_only:true}});
                         writeFile(filepath,mini.code);
                     }
                 }
