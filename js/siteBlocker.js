@@ -174,7 +174,9 @@ var isBlocked;
             if (changeInfo.status === "loading") {
                 handleNewTab(tab);
             } else if (changeInfo.title) {
-                title = changeInfo.title;
+                //this should be consistent with handleNewTab
+                //want to change, but this is simpler for now
+                title = tab.incognito ? "incognito" : changeInfo.title;
             }
         }
     });
