@@ -16,6 +16,14 @@ var youtubeVideoNames = [];
         }
     });
 
+    //inject youtube script into all youtube tabs
+    //mostly for development, any tab opened after extension loaded should have it already
+    youtubeTabs(function(tabs) {
+        for (var i = 0 ; i < tabs.length ; i++) {
+            chrome.tabs.executeScript(tabs[i].id,{file:scriptUrl});
+        }
+    });
+
     function youtubeTabs(callback) {
         //get all youtube tabs that isn't the current one
         var query = {url:["*://*.youtube.com/*", "*://youtube.com/*"]};
