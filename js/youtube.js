@@ -72,8 +72,20 @@ var youtubeVideoNames = [];
                 }
 
                 function action() {
-                    if (numPlaying) {
-                        if (!index || index === "K") {
+                    if (index && index !== "K") {
+                        if (numPlaying) {
+                            for (var i = 0 ; i < num ; i++) {
+                                if (states[i] === "play") {
+                                    var tab = tabs[i];
+                                    var data = {action:index === "J" ? "back" : "forward"};
+
+                                    chrome.tabs.sendMessage(tab.id,data);
+                                }
+                            }
+                        }
+                        return;
+                    } else {
+                        if (numPlaying) {
                             emptyList();
                             for (var i = 0 ; i < num ; i++) {
                                 if (states[i] === "play") {
@@ -85,21 +97,12 @@ var youtubeVideoNames = [];
                                 }
                             }
                             sendRequest("youtube");
-                        } else {
-                            for (var i = 0 ; i < num ; i++) {
-                                if (states[i] === "play") {
-                                    var tab = tabs[i];
-                                    var data = {action:index === "J" ? "back" : "forward"};
-
-                                    chrome.tabs.sendMessage(tab.id,data);
-                                }
-                            }
+                        } else if (youtubeVideoIds.length) {
+                            playAll();
+                            sendRequest("youtube");
+                        } else if (isBlocked()) {
+                            playCurrent(tabs);
                         }
-                    } else if (youtubeVideoIds.length) {
-                        playAll();
-                        sendRequest("youtube");
-                    } else if (isBlocked()) {
-                        playCurrent(tabs);
                     }
                 }
             });
