@@ -1,6 +1,6 @@
 {
   "name": "Chrome Tools",
-  "version": "5.4.3",
+  "version": "5.4.4",
   "description": "Various tools to help with organization and time management",
   "permissions": ["<all_urls>","alarms","storage","tabs","unlimitedStorage","activeTab","webRequest","webRequestBlocking"],
   "background": {
