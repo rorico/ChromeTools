@@ -2,48 +2,52 @@ function parseSchedule(text) {
     var info = [];
     var beginning = "University of Waterloo";
     var end = "Printer Friendly Page";
-    var classTypes = ["SEM","TUT","LAB","LEC","TST"];
+    var classTypes = {
+        "SEM": true,
+        "TUT": true,
+        "LAB": true,
+        "LEC": true,
+        "TST": true
+    };
     var content = text.substring(text.indexOf(beginning) + beginning.length,text.indexOf(end));
-    var courses = content.split("Exam Information");
-    //last one is empty
-    for (var i = 0 ; i < courses.length - 1 ; i++) {
-        var courseInfo = [];
-        var lines = courses[i].split("\n");
-        var courseName = [];
-        var currentInfo = [];
-        var type = "";
-        var index = 0;
-        for (var j = 0 ; j < lines.length ; j++){
-            var line = lines[j];
-            if (/^[A-Z].+$/.test(line)){
-                var courseParts = line.split(" ");
-                var courseCode = courseParts[0] + " " + courseParts[1];
-                var courseDescription = line.substring(courseCode.length);
-                courseName = [courseCode,courseDescription];
-                break;
+    var lines = content.split("\n");
+    var courseInfo = [];
+    var courseName = [];
+    var currentInfo = [];
+    var type = "";
+    var index = 0;
+    for (var i = 0 ; i < lines.length ; i++) {
+        line = lines[i];
+        // looking for the line below the course code
+        if (/^Status/.test(line)){
+            var course = lines[i-1]
+            var courseParts = course.split(" - ");
+            var courseCode = courseParts[0];
+            var courseDescription = " - " + courseParts[1];
+
+            if (currentInfo.length) {
+                courseInfo.push([type,currentInfo]);
+                currentInfo = [];
             }
-        }
-        for (var j = 0 ; j < lines.length ; j++) {
-            for(var k = 0 ; k < classTypes.length ; k++) {
-                if (lines[j] == classTypes[k]){
-                    if(currentInfo.length) {
-                        courseInfo.push([type,currentInfo]);
-                        currentInfo = [];
-                    }
-                    type = classTypes[k];
-                    break;
-                }
+            if (courseInfo.length) {
+                info.push([courseName,courseInfo]);
             }
-            if (/^[MTWTFh]{1,6} \d{1,2}:.+$/.test(lines[j])) {
-                currentInfo.push([getClassLength(lines[j]),lines[j+1],parseDate(lines[j+3])])
-                j+=4;
-            }
-        }
-        if(currentInfo.length) {
-            courseInfo.push([type,currentInfo]);
+
+            courseName = [courseCode,courseDescription];
+            courseInfo = [];
             currentInfo = [];
+            type = "";
+            index = 0;
+        } else if (classTypes[line]) {
+            if (currentInfo.length) {
+                courseInfo.push([type,currentInfo]);
+                currentInfo = [];
+            }
+            type = line;
+        } else if (/^[MTWTFh]{1,6} \d{1,2}:.+$/.test(lines[i])) {
+            currentInfo.push([getClassLength(lines[i]),lines[i+1],parseDate(lines[i+3])])
+            i += 4;
         }
-        info.push([courseName,courseInfo]);
     }
     return info;
 }
