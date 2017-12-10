@@ -1,7 +1,3 @@
-function submitSchedule(data) {
-    chrome.storage.sync.set({"scheduleInfo": data});
-}
-
 function parseSchedule(text) {
     var info = [];
     var beginning = "University of Waterloo";

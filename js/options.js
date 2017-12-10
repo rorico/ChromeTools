@@ -235,6 +235,10 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     var iframeInfo = backgroundPage.iframeInfo;
     var scheduleInfo = backgroundPage.scheduleInfo;
 
+    function submitSchedule(data) {
+        chrome.storage.sync.set({"scheduleInfo": data});
+        backgroundPage.setScheduleInfo();
+    }
     liveChange("class",scheduleInfo,parseSchedule,submitSchedule);
     liveChange("iframe",iframeInfo,parseIframe,submitIframe);
 
