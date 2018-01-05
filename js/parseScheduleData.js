@@ -21,9 +21,6 @@ function parseSchedule(text) {
         // looking for the line below the course code
         if (/^Status/.test(line)){
             var course = lines[i-1]
-            var courseParts = course.split(" - ");
-            var courseCode = courseParts[0];
-            var courseDescription = " - " + courseParts[1];
 
             if (currentInfo.length) {
                 courseInfo.push([type,currentInfo]);
@@ -32,8 +29,7 @@ function parseSchedule(text) {
             if (courseInfo.length) {
                 info.push([courseName,courseInfo]);
             }
-
-            courseName = [courseCode,courseDescription];
+            courseName = course.split(" - ");
             courseInfo = [];
             currentInfo = [];
             type = "";
@@ -45,7 +41,12 @@ function parseSchedule(text) {
             }
             type = line;
         } else if (/^[MTWTFh]{1,6} \d{1,2}:.+$/.test(lines[i])) {
-            currentInfo.push([getClassLength(lines[i]),lines[i+1],parseDate(lines[i+3])])
+            currentInfo.push([
+                // classrooms have random spaces
+                lines[i+1].replace(/ +/g," "),
+                getClassLength(lines[i]),
+                parseDate(lines[i+3])
+            ])
             i += 4;
         }
     }
@@ -58,28 +59,42 @@ function parseSchedule(text) {
     }
     return info;
 }
-//remember to reset
-function parseDate(date) {
-    var returnValues = [];
-    var dates = date.split(" - ");
-    for (var i = 0 ; i < dates.length ; i++) {
-        var dateparts = dates[i].split("/");
-        //MM/DD/YYYY
-        if (i==1) {
-            returnValues.push(+new Date(dateparts[2],dateparts[0]-1,dateparts[1],23,59,59,999));
-        } else {
-            returnValues.push(+new Date(dateparts[2],dateparts[0]-1,dateparts[1]));
-        }
-    }
-    return returnValues;
+
+function parseDate(dates) {
+    return dates.split(" - ").map(date => {
+        // MM/DD/YYYY to YYYY-MM-DD
+        var parts = date.split("/");
+        return new Date(parts[2],parts[0]-1,parts[1]).toISOString().split("T")[0]
+    });
 }
 
 function getClassLength(range) {
     var words = range.split(" ");
     var startValue = parseTime(words[1]);
     var endValue = parseTime(words[3]);
-    return [words[0],startValue,endValue];
+    return [dayOfWeek(words[0]),startValue,endValue];
 }
+
+function dayOfWeek(str) { //same day of week
+    var ret = "";
+    if (str.indexOf("M") > -1) {
+        ret += "1"
+    }
+    if (str.indexOf("T") > -1 && str[str.indexOf("T") + 1] !== "h") {
+        ret += "2"
+    }
+    if (str.indexOf("W") > -1) {
+        ret += "3"
+    }
+    if (str.indexOf("Th") > -1) {
+        ret += "4"
+    }
+    if (str.indexOf("F") > -1) {
+        ret += "5"
+    }
+    return ret;
+}
+
 
 function parseTime(time) {
     var timeParts = time.split(":");

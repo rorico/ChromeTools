@@ -131,9 +131,9 @@ var isBlocked;
         var position = now - timeLineLength;
         for (var i = 0 ; i < today.length ; i++) {
             var thisClass = today[i];
-            var end = militaryToUTC(thisClass[0][2]);
+            var end = militaryToUTC(thisClass[1][2]);
             if (position < end) {
-                var start = militaryToUTC(thisClass[0][1])
+                var start = militaryToUTC(thisClass[1][1])
                 addNoBlock(start,end,thisClass);
             }
         }

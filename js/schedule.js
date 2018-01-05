@@ -129,21 +129,27 @@ var scheduleInit = (function() {
                         addTimeSlot(holder,"placeholder placeborder",endTime - startTime,["No Classes Today"]);
                         addTimeSlot(holder,"placeholder placeborder",1);
                     } else {
-                        addPlaceholder(holder,startTime,today[0][0][1]);
+                        addPlaceholder(holder,startTime,today[0][1][1]);
                         for (var i = 0 ; i < today.length ; i++) {
-                            var start = today[i][0][1];
-                            var finish = today[i][0][2];
+                            var start = today[i][1][1];
+                            var finish = today[i][1][2];
                             var classType = today[i][3];
                             var classCode = today[i][2][0];
                             var className = today[i][2][1];
-                            var location = today[i][1];
+                            var location = today[i][0];
 
                             var height = finish - start;
-                            var classInfo = [classCode + (weekMode ? "" : " " + className) + " - " + classType, location];
+                            var classTitle = [classCode];
+                            if (!weekMode) {
+                                classTitle.push(className);
+                            }
+                            classTitle.push(classType);
+
+                            var classInfo = [classTitle.join(" - "), location];
                             addTimeSlot(holder,"class " + classType,height,classInfo);
 
                             var beginning = finish;
-                            var end = (i === today.length - 1 ? endTime : today[i+1][0][1]);
+                            var end = (i === today.length - 1 ? endTime : today[i+1][1][1]);
                             addPlaceholder(holder,beginning,end);
                         }
                         addTimeSlot(holder,"placeholder placeborder",0);
