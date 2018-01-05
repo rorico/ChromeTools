@@ -49,6 +49,13 @@ function parseSchedule(text) {
             i += 4;
         }
     }
+    if (currentInfo.length) {
+        courseInfo.push([type,currentInfo]);
+        currentInfo = [];
+    }
+    if (courseInfo.length) {
+        info.push([courseName,courseInfo]);
+    }
     return info;
 }
 //remember to reset
