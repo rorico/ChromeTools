@@ -43,6 +43,7 @@
     font-size: 13px;
     vertical-align: middle;
     overflow: hidden;
+    display: inline-block;
 }
 #chromeTools_calendar .timeline {
     float: left;

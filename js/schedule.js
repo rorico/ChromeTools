@@ -85,11 +85,11 @@ var scheduleInit = (function() {
             if (weekMode) {
                 var width = Math.floor((container.width() - 100) / numDays);
 
-                $(".class").outerWidth(width);
                 $(".placeholder").outerWidth(width);
                 $("#now").outerWidth(width);
             }
         }
+        now.setDate(now.getDate() - 2)
         changeDate(now);
         return {
             resize: resize
@@ -130,27 +130,69 @@ var scheduleInit = (function() {
                         addTimeSlot(holder,"placeholder placeborder",1);
                     } else {
                         addPlaceholder(holder,startTime,today[0][1][1]);
-                        for (var i = 0 ; i < today.length ; i++) {
-                            var start = today[i][1][1];
-                            var finish = today[i][1][2];
-                            var classType = today[i][3];
-                            var classCode = today[i][2][0];
-                            var className = today[i][2][1];
-                            var location = today[i][0];
-
-                            var height = finish - start;
-                            var classTitle = [classCode];
-                            if (!weekMode) {
-                                classTitle.push(className);
+                        // group together classes when occupying same timeslot
+                        // not the most optimal with 3 overlapping, but that doesn't really happen
+                        var groups = [[today[0]]];
+                        var end = today[0][1][2];
+                        for (var i = 1 ; i < today.length ; i++) {
+                            var cls = today[i];
+                            if (cls[1][1] < end) {
+                                groups[groups.length - 1].push(cls);
+                            } else {
+                                groups.push([cls])
                             }
-                            classTitle.push(classType);
+                            end = cls[1][2];
+                        }
+                        for (var k = 0 ; k < groups.length ; k++) {
+                            var group = groups[k];
+                            var groupStart = group[0][1][1];
+                            var groupEnd = group[group.length - 1][1][2]
+                            var groupHolder;
+                            var thisHolder = groupHolder = holder;
+                            var singleMode = group.length === 1;
+                            if (!singleMode) {
+                                groupHolder = thisHolder = $("<div class='placeholder'></div>");
+                                holder.append(thisHolder);
+                            }
+                            // kinda sketchy, but will work for now. Consider changing to more functional
+                            var holdOffset = offset;
+                            for (var i = 0 ; i < group.length ; i++) {
+                                offset = holdOffset;
+                                var cls = group[i];
+                                var start = cls[1][1];
+                                var finish = cls[1][2];
+                                var classType = cls[3];
+                                var classCode = cls[2][0];
+                                var className = cls[2][1];
+                                var location = cls[0];
 
-                            var classInfo = [classTitle.join(" - "), location];
-                            addTimeSlot(holder,"class " + classType,height,classInfo);
+                                var height = finish - start;
+                                var classTitle = [classCode];
+                                var cssCls = "class " + classType
+                                if (singleMode) {
+                                    if (!weekMode) {
+                                        classTitle.push(className);
+                                    }
+                                    classTitle.push(classType);
+                                    cssCls += " placeholder"
+                                } else {
+                                    // classType shows when singleMode or weekmode, not both
+                                    if (!weekMode) {
+                                        classTitle.push(classType);
+                                    }
+                                    thisHolder = $("<div style='display:inline;'></div>");
+                                    groupHolder.append(thisHolder);
+                                }
 
-                            var beginning = finish;
-                            var end = (i === today.length - 1 ? endTime : today[i+1][1][1]);
-                            addPlaceholder(holder,beginning,end);
+                                var classInfo = [classTitle.join(" - "), location];
+                                addPlaceholder(thisHolder,groupStart,start);
+                                addTimeSlot(thisHolder,cssCls,height,classInfo,group.length);
+                                addPlaceholder(thisHolder,finish,groupEnd);
+                            }
+                            var end = k === groups.length - 1 
+                                ? endTime
+                                : groups[k+1][0][1][1];
+                            addPlaceholder(thisHolder,groupEnd,end);
                         }
                         addTimeSlot(holder,"placeholder placeborder",0);
                     }
@@ -175,7 +217,7 @@ var scheduleInit = (function() {
             }
         }
 
-        function addTimeSlot(container,classType,time,content) {
+        function addTimeSlot(container,classType,time,content,share) {
             //do no need to account for border as using box-sizing:border-box
             var height = time/(60/pxPerHr);
             var thisHeight = height + offset;
@@ -186,7 +228,8 @@ var scheduleInit = (function() {
             if (content && content.length) {
                 thisContent = "<p style='top:" + (thisHeight - 15.2 * content.length)/2 + "px'>" + content.join("<br />") + "</p>";
             }
-            container.append("<div class='" + classType + "' style='height:" + thisHeight + "px'>" + thisContent + "</div>");
+            var style = "height:" + thisHeight + "px;" + (share > 1 ? "width:" + (100/share) + "%;" : "")
+            container.append("<div class='" + classType + "' style='" + style + "'>" + thisContent + "</div>");
         }
 
         function sameDay(day1,day2) {
