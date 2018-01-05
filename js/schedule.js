@@ -89,7 +89,7 @@ var scheduleInit = (function() {
                 $("#now").outerWidth(width);
             }
         }
-        now.setDate(now.getDate() - 2)
+
         changeDate(now);
         return {
             resize: resize
