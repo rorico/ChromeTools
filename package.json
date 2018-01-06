@@ -1,0 +1,26 @@
+{
+  "name": "chrometools",
+  "version": "1.0.0",
+  "description": "A google extension that helps me manage my time and schedule.",
+  "main": "compress.js",
+  "scripts": {
+    "build": "node compress",
+    "start": "npm run build",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rorico/ChromeTools.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rorico/ChromeTools/issues"
+  },
+  "homepage": "https://github.com/rorico/ChromeTools#readme",
+  "dependencies": {
+    "ncp": "^2.0.0",
+    "uglify-es": "^3.3.4",
+    "uglifycss": "0.0.27"
+  }
+}
