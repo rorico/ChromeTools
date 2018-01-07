@@ -271,9 +271,9 @@ var scheduleInit = (function() {
         }
     }
 
-    function weekView() {
+    function weekView(mode) {
+        weekMode = mode === undefined ? !weekMode : mode;
         var date = $("#datepicker").datepicker("getDate");
-        weekMode = !weekMode;
         if (weekMode) {
             $("#showWeek").val("Show Day");
             showWeek(date);
