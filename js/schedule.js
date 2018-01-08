@@ -1,4 +1,5 @@
 var scheduleInit = (function() {
+    var containerID = "chromeTools_calendar";
     var now = new Date();
     var startTime = 7 * 60;        //7AM
     var endTime = 19 * 60;         //7PM
@@ -44,7 +45,7 @@ var scheduleInit = (function() {
         var contain = "<div id='container'></div>";
         var holder = "<div id='holder'>" + side + mid + right1 + right2 + contain + "</div>";
 
-        var html = "<div id='chromeTools_calendar'>" + header + holder + "</div>";
+        var html = "<div id='" + containerID + "'>" + header + holder + "</div>";
         container.html(html);
 
         container.attr("tabindex",1).focus().keydown(function(e) {
@@ -198,7 +199,7 @@ var scheduleInit = (function() {
                     }
                     all.append(holder).append("<div id='side'></div>");
                 }
-                $("#container").html(all);
+                $("#"+ containerID).find("#container").html(all);
                 resize();
             });
         }
