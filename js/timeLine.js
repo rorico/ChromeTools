@@ -305,10 +305,7 @@ var timeLineInit;
                     color = "red";
                     var startI = 2;
                     do {
-                        var text = "";
-                        for (var j = 0 ; j < startI ; j++) {
-                            text += info[2][j];
-                        }
+                        var text = info[2].slice(0,startI).join(" - ");
                         ele.html(text);
                         startI--;
                         //if text is too large for div
