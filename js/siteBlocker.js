@@ -340,8 +340,9 @@ var isBlocked;
                 }
             }
 
-            blockTab(time,countDown,blockType);
             countDownTimer(time,endTime,countDown);
+            // this can change timeline, so put at very bottom
+            blockTab(time,countDown,blockType);
         }
 
         function countDownTimer(time,endTime,countDown) {
