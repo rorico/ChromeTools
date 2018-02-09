@@ -3,6 +3,7 @@ const UglifyJS = require("uglify-es");
 const Uglifycss = require("uglifycss");
 const fs = require("fs");
 const ncp = require("ncp");
+const semver = require("semver");
 
 var minifiedFolder = "minified";
 var jsFolder = "js";
@@ -23,6 +24,15 @@ var special = [
     ".gitignore",
     "node_modules"
 ];
+
+//folllow semver, default to minor
+var updateType = process.argv[2] || "minor";
+var manifestFile = "./manifest.json";
+
+//update version
+var manifest = require(manifestFile);
+manifest.version = semver.inc(manifest.version,updateType);
+writeFile(manifestFile,JSON.stringify(manifest,null,2),true);
 
 //makes minifiedFolder
 mkdir("",function() {
@@ -122,8 +132,8 @@ function output(name) {
     return minifiedFolder + "/" + name;
 }
 
-function writeFile(file,data) {
-    fs.writeFile(output(file),data,checkError);
+function writeFile(file,data,blah) {
+    fs.writeFile(blah ? file : output(file),data,checkError);
 }
 
 function mkdir(name,callback) {
@@ -144,6 +154,7 @@ function copyRecursive(dir) {
 function checkError(err) {
     if (err) {
         console.error(err);
+        console.trace();
         process.exit(1);
         return;
     }
