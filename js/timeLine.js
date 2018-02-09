@@ -9,6 +9,7 @@ var timeLineInit;
     var timeCurrent;
     var noBlocks;
     var countDownTimer = -1;
+    var SMALL = 2;
 
     var timeLine;
     var timeLineLength;
@@ -39,6 +40,7 @@ var timeLineInit;
     timeLineInit = init;
 
     function init(container,background) {
+        var start = new Date();
         find = function(sel) {
             return container.find(sel);
         }
@@ -110,7 +112,6 @@ var timeLineInit;
                 }
             }
         });
-
         return {
             resize: timeLineResize,
             update: setTimeLine
@@ -146,6 +147,7 @@ var timeLineInit;
         timeLineOffset = 0;
         timeCurrent = new Date() - startTime;
         var $timeLine = find("#timeLines-0");
+        var timelineHtml = ""
 
         if (add(-1,startTime,timeCurrent,wastingTime)) {
             var last;
@@ -165,6 +167,7 @@ var timeLineInit;
                 add(-2,oldest,last - oldest);
             }
         }
+        find("#timeLines-2").append(timelineHtml);
         addNoBlocks();
         displayInfo(-1);
         updateTimeLine();
@@ -176,28 +179,40 @@ var timeLineInit;
                 time +=  start - oldest;
                 ret = false;
             }
-            addTimeLine(index,time,wastingTime);
+            timelineHtml = (addTimeLine(index,time,wastingTime,false,true) || "") + timelineHtml;
             return ret;
         }
     }
     //returns true if not done
-    function addTimeLine(index,time,wastingTime,first) {
-        var classes = index === -2 ? "" : "wasting" + wastingTime;
-        var block = addBlock(find("#timeLines-0"),index,time,"","",first);
+    function addTimeLine(index,time,wastingTime,first,html) {
+        var classes = (index === -2 ? "" : "wasting" + wastingTime);
+        var block = getBlock(index,time,classes,getTimeLineId(index));
+
         if (block) {
+            var copy = $(block).removeAttr("id").addClass("placeholder");
             if (index !== -2) {
-                setClick(block,getIndex(index));
+                setClick(copy,getIndex(index));
+                copy.removeClass(classes);
             }
-            var copy = block.clone().attr("id",getTimeLineId(index)).addClass(classes);
-            appendBlock(find("#timeLines-2"),copy,first);
-            //hide the top layer
-            block.addClass("placeholder");
+            appendBlock(find("#timeLines-0"),copy,first);
+            if (html) {
+                return block;
+            } else {
+                appendBlock(find("#timeLines-2"),block,first);
+            }
         }
     }
 
     function addBlock(holder,index,time,classes,id,first) {
-        var width = timeToWidth(time) + offset;
-        offset = width % 1;
+        var block = $(getBlock(index,time,classes,id));
+        appendBlock(holder,block,first);
+        return block;
+    }
+
+    function getBlock(index,time,classes,id) {
+        // add a rounding error of 0.1
+        var width = timeToWidth(time) + offset + 0.1;
+        offset = width % 1 - 0.1;
         width = Math.floor(width);
         //if smaller than 1px, don't bother adding, unless at very start or end (these will change size)
         if (width < 1 && index !== -1) {
@@ -205,13 +220,10 @@ var timeLineInit;
         }
 
         classes = classes ? classes + " timeLine" : "timeLine";
-        if (width >= 3) {
+        if (width >= SMALL) {
             classes += " timeLineBlock";
         }
-
-        var timeLineEntry = $("<div style='width:" + width + "px;' class='" + classes + (id ? "' id='" + id : "") + "'></div>");
-        appendBlock(holder,timeLineEntry,first);
-        return timeLineEntry;
+        return "<div style='width:" + width + "px;' class='" + classes + (id ? "' id='" + id : "") + "'></div>";
     }
 
     function appendBlock(holder,entry,first) {
@@ -318,7 +330,6 @@ var timeLineInit;
     }
 
     function changeNoBlock(nos) {
-        console.log(nos);
         noBlocks = nos;
         find("#timeLines-1").empty();
         addNoBlocks();
@@ -399,12 +410,12 @@ var timeLineInit;
                     if (!oldestEles[j].is(newestEles[j])) {
                         oldestWidths[j]--;
                         oldestEles[j].outerWidth(oldestWidths[j]);
-                        if (oldestEles[j].hasClass("timeLineBlock") && oldestEles[j].width() < 3) {
+                        if (oldestEles[j].hasClass("timeLineBlock") && oldestEles[j].width() < SMALL) {
                             oldestEles[j].removeClass("timeLineBlock");
                         }
                         newestWidths[j]++;
                         newestEles[j].outerWidth(newestWidths[j]);
-                        if (!newestEles[j].hasClass("timeLineBlock") && newestWidths[j] >= 3) {
+                        if (!newestEles[j].hasClass("timeLineBlock") && newestWidths[j] >= SMALL) {
                             newestEles[j].addClass("timeLineBlock");
                         }
                     }

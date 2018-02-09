@@ -38,7 +38,10 @@
     display: inline-block;
 }
 #chromeTools_timeLine .timeLineBlock {
-    border: 1px solid white;
+    border-left: 1px solid white;
+}
+#chromeTools_timeLine div:first-child {
+    border-left: 0;
 }
 #chromeTools_timeLine .placeholder {
     opacity: 0;
