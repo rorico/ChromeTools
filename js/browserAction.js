@@ -133,7 +133,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
         var numUnread = background.numUnread;
         if (numUnread) {
             topButton(logs,"!","left",true,function(index) {
-                sendRequest("removeLog",i);
+                sendRequest("removeLog",index);
             })
         }
     }
