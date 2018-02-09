@@ -24,7 +24,7 @@ var timeLineInit;
     var find;
 
     //for setup key presses
-    keyPhrases = [["RESET",resetTimeLine,20],
+    var keyPhrases = [["RESET",resetTimeLine,20],
                     ["VIP",VIP,18],
                     ["FINISH",finish,15],
                     ["CHANGE",change,10],
