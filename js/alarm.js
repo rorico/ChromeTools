@@ -40,14 +40,21 @@ function setSleepAlarm() {
     var date = new Date();
     date.setSeconds(0);
     date.setMinutes(Math.floor(date.getMinutes()/30)*30 + 30);
-    if (date.getHours()<sleepAlarmStart && date.getHours()>sleepAlarmEnd) {
+    if (!inSleepRange(date)) {
         date.setHours(sleepAlarmStart);
         date.setMinutes(0);
     }
     setTimer(function() {
-        setAlarm(0,1);
+        // if computer sleeps or something, this runs a lot later, check if it's past end time
+        var date = new Date();
+        if (inSleepRange(date)) {
+            setAlarm(0,1);
+        }
         setSleepAlarm();
     },date - new Date());
+    function inSleepRange(date) {
+        return date.getHours()>=sleepAlarmStart || date.getHours()<=sleepAlarmEnd;
+    }
 }
 
 function setAlarm(delay,type) {
