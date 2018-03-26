@@ -16,6 +16,10 @@ var addNumberListener;
 
         container.attr("tabindex",1).keydown(function(e) {
             e.stopPropagation();
+            // ignore if ctrl or alt are being pressed (for outside shortcuts)
+            if (e.ctrlKey || e.altKey) {
+                return;
+            }
             if (currentPhrase) {
                 //get ascii value of next part
                 if (e.keyCode === currentPhrase[0].charCodeAt(phraseIndex)) {
