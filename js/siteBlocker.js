@@ -225,10 +225,10 @@ var isBlocked;
         modifyTimeLine("add",newest);
         if (wastingTime) {
             changeTimeLeft(-timeSpent);
-            //don't want to slow down event handler
-            setTimeout(function() {
-                storeData("timeLine",newest);
-            },0);
+            // //don't want to slow down event handler
+            // setTimeout(function() {
+            //     storeData("timeLine",newest);
+            // },0);
         }
         //handle new page
         startTime = new Date();     //consider converting to integer right here
@@ -561,7 +561,7 @@ var isBlocked;
                         blockedUrl = url;
                         blockedTitle = title;
                         handleNewPage("Blocked","Blocked");
-                        storeData("redirect",[+new Date(),url]);
+                        // storeData("redirect",[+new Date(),url]);
                     }
                 });
             }
