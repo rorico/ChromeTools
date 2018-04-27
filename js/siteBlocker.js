@@ -5,7 +5,6 @@ var url = "";
 var title = "";
 var timeLeft = 0;
 var timeLine = [];
-var timeLineLength;
 var noBlocks = [];
 
 //functions
@@ -33,18 +32,23 @@ var isBlocked;
         "*://imgur.com/*","*://*.imgur.com/*"
     ]];
 
-    timeLineLength = 1800000; // 30 mins
-    var startingTimeLeft = 300000; // 5 mins
-    var VIPlength = 20000; // 20s
-    var zeroLength = 1800000; // 30 mins
-    var tolerance = 2000; // 2s
-    var quickTabTime = 400; // 0.4s
+    addDefault("timeLineLength", 1800000); // 30 mins
+    addDefault("startingTimeLeft", 300000); // 5 mins
+    addDefault("VIPlength", 20000); // 20s
+    addDefault("zeroLength", 1800000); // 30 mins
+    addDefault("tolerance", 2000); // 2s
+    addDefault("quickTabTime", 400); // 0.4s
     if (0) { // if in testing mode
-        timeLineLength = 120000; // 2 mins
-        startingTimeLeft = 60000; // 1 mins
+        addDefault("timeLineLength", 120000); // 2 mins
+        addDefault("startingTimeLeft", 60000); // 1 mins
     }
+    // might need to move to let functions load first
+    onSettingChange("startingTimeLeft", (newS, oldS) => {
+        timeLeft += newS - oldS;
+        returnTime();
+    });
 
-    timeLeft = startingTimeLeft;
+    timeLeft = settings.startingTimeLeft;
     
     //functions in their own closure
     var blockTab;
@@ -105,7 +109,7 @@ var isBlocked;
         if (isFinite(next[0])) {
             var now = new Date();
             var inBlock = next[0] < now;
-            nextNoBlock = inBlock ? next[1] : next[0] - startingTimeLeft;
+            nextNoBlock = inBlock ? next[1] : next[0] - settings.startingTimeLeft;
             noBlockTimer = setTimer(function check() {
                 nextNoBlock = inBlock ? next[1] : next[0] - timeLeft;
                 var time = nextNoBlock - new Date();
@@ -128,7 +132,7 @@ var isBlocked;
     function setupClass(today) {
         var now = new Date();
         //want history of previous classes
-        var position = now - timeLineLength;
+        var position = now - settings.timeLineLength;
         for (var i = 0 ; i < today.length ; i++) {
             var thisClass = today[i];
             var end = militaryToUTC(thisClass[1][2]);
@@ -218,7 +222,7 @@ var isBlocked;
         var newWasting = matchesURL(newUrl);
         var timeSpent = new Date() - startTime;
         //if small time spent on wasting, don't count
-        if (timeSpent < tolerance) {
+        if (timeSpent < settings.tolerance) {
             wastingTime = 0;
         }
         var newest = [timeSpent,wastingTime,url,title,+startTime];
@@ -249,7 +253,7 @@ var isBlocked;
         sendContent("newPage",info);
 
         //check for returnTime to be more up to date
-        if (startTime > nextTime + tolerance) {
+        if (startTime > nextTime + settings.tolerance) {
             returnTime();
         }
     }
@@ -328,7 +332,7 @@ var isBlocked;
                 }
 
                 //don't even bother if more time left than limit
-                var VIPtimeLeft = VIPlength - now + tempVIPstartTime;
+                var VIPtimeLeft = settings.VIPlength - now + tempVIPstartTime;
                 if (VIPtab === tabId && time < VIPtimeLeft) {
                     //if not wasting time, vip will countDown, but stop when reach timeLeft
                     if (!countDown && !wastingTime && time > endTime) {
@@ -403,8 +407,8 @@ var isBlocked;
             }
             clearTimeout(blockTimer);
             if (countDown && wastingTime) {
-                if (time < tolerance) {
-                    time = tolerance;
+                if (time < settings.tolerance) {
+                    time = settings.tolerance;
                 }
                 block(tabId,time,blockType);
             }
@@ -412,14 +416,14 @@ var isBlocked;
 
         function block(tabId,time,blockType) {
             //instead of increasing time for wastingTime 2, let it finish, but ring once
-            if (wastingTime === 2 && time + +new Date() - startTime > VIPlength + tolerance) {
+            if (wastingTime === 2 && time + +new Date() - startTime > settings.VIPlength + settings.tolerance) {
                 blockTimer = setTimeout(function() {
                     finish();
                     setAlarm(0,2);
                 },time);
             } else {
                 var start = +new Date();
-                var delay = Math.max(time - tolerance,quickTabTime);
+                var delay = Math.max(time - settings.tolerance,settings.quickTabTime);
                 blockTimer = setTimeout(function() {
                     //note, won't inject if already injected
                     injectScripts(tabId,blockType,function(ready) {
@@ -526,7 +530,7 @@ var isBlocked;
                 if (type === "time") {
                     info = {
                         //just for setup
-                        timeLineLength: timeLineLength,
+                        timeLineLength: settings.timeLineLength,
                         iframeInfo: iframeInfo,
                         delay: blockTime
                     };
@@ -550,7 +554,7 @@ var isBlocked;
                         url: url,
                         title: title,
                         timeLine: timeLine,
-                        timeLineLength: timeLineLength,
+                        timeLineLength: settings.timeLineLength,
                         noBlocks: noBlocks
                     };
                 }
@@ -600,7 +604,7 @@ var isBlocked;
     })();
 
     function returnTime() {
-        var date = new Date() - timeLineLength;
+        var date = new Date() - settings.timeLineLength;
         var endingIndex = -1;
         var cnt = 0;
         var timeTotal = 0;
@@ -651,7 +655,7 @@ var isBlocked;
         }
         timeLeftOutput();
         //upper limit can be passed if currently in very long wastingTime
-        var nextDelay = Math.min(timeTotal - timeLeft + currentTimeOffset,timeLineLength - startingTimeLeft);
+        var nextDelay = Math.min(timeTotal - timeLeft + currentTimeOffset,settings.timeLineLength - settings.startingTimeLeft);
         //used to make sure that this is called at appropriate times
         nextTime = +new Date() + nextDelay;
         clearTimer(returnTimer);
@@ -661,7 +665,7 @@ var isBlocked;
     ///////////// Requests from outside ///////////
     function resetTime() {
         startTime = new Date();
-        timeLeft = startingTimeLeft;
+        timeLeft = settings.startingTimeLeft;
         timeLine = [];
         startTimeLine();
 
@@ -712,7 +716,7 @@ var isBlocked;
         tempVIPtimer = setTimeout(function() {
             VIPtab = -1;
             tempVIPstartTime = 0;
-        },VIPlength);
+        },settings.VIPlength);
         timeLeftOutput();
     }
 
@@ -734,13 +738,13 @@ var isBlocked;
     function zero() {
         var now = +new Date();
         var currentNo = checkNoBlock(now);
-        var end = now + zeroLength;
+        var end = now + settings.zeroLength;
         //if not a schedule block
         if (isFinite(currentNo[0]) && !currentNo[2]) {
             //extend current no block
             currentNo[1] = end;
         } else {
-            addNoBlock(now, now + zeroLength);
+            addNoBlock(now, now + settings.zeroLength);
         }
         timeLeftOutput();
         noBlockReminder();

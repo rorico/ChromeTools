@@ -67,7 +67,7 @@ var timeLineInit;
 
         find(".axisPart").outerWidth(parentWidth/6);
 
-        timeLineLength = background.timeLineLength;
+        timeLineLength = background.settings.timeLineLength;
         setTimeLine(background);
         countDown(timeLeft);
 

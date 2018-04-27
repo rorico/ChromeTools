@@ -303,7 +303,8 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var key = $($this.find(".setting")).val();
             var val = $($this.find(".val")).val();
             if (key && val) {
-                set[key] = val;
+                // for now all values are integer
+                set[key] = +val;
             }
         });
         backgroundPage.updateSettings(set);
