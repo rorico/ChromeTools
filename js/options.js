@@ -1,4 +1,4 @@
-chrome.runtime.getBackgroundPage(function (backgroundPage) {
+chrome.runtime.getBackgroundPage(function(backgroundPage) {
     var processRedirect;
     var processTimeLine;
     (function() {
@@ -241,6 +241,73 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     }
     liveChange("class",scheduleInfo,parseSchedule,submitSchedule);
     liveChange("iframe",iframeInfo,parseIframe,submitIframe);
+
+    // other settings
+    var defaults = backgroundPage.defaults;
+    var settings = backgroundPage.settings;
+    var userSettings = backgroundPage.userSettings;
+
+
+    $settings = $("#settings");
+    for (var u in userSettings) {
+        $settings.append(settingRow(u, userSettings[u]));
+    }
+    $settings.append(settingRow());
+
+    function settingRow(setting, val) {
+        var ele = $("<div></div>");
+        var html = "<select class='setting'>";
+        if (!setting) {
+            html += "<option selected disabled></option>";
+        }
+        for (var d in defaults) {
+            html += "<option value='" + d + "'" + (d === setting ? " selected" : "") + ">" + d + "</option>";
+        }
+        html += "</select>";
+        var select = $(html);
+        ele.append(select);
+        var input = $("<input type='text' class='val'" + (val ? " value='" + val + "'" : "") + ">");
+        ele.append(input);
+        var notEmpty = () => {
+            var del = $("<input type='button' class='del' value='&#10006;'>");
+            ele.prepend(del.clone().addClass("placeholder"))
+            del.click(function() {
+                ele.remove();
+            });
+            ele.append(del);
+        }
+        var empty = !setting;
+        if (!empty) {
+            notEmpty();
+        }
+        select.change(function() {
+            var key = select.val();
+            if (defaults[key]) {
+                if (empty) {
+                    notEmpty();
+                    $("#settings").append(settingRow());
+                }
+                empty = false;
+                input.attr("placeholder", defaults[key]);
+            } else {
+                input.removeAttr("placeholder");
+            }
+        });
+
+        return ele;
+    }
+    $("#settings-submit").click(() => {
+        var set = {};
+        $("#settings").children().each(function() {
+            var $this = $(this);
+            var key = $($this.find(".setting")).val();
+            var val = $($this.find(".val")).val();
+            if (key && val) {
+                set[key] = val;
+            }
+        });
+        backgroundPage.updateSettings(set);
+    });
 
     function liveChange(baseId,data,parser,submitCallback) {
         var before = $("#" + baseId + "-before");

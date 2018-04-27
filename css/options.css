@@ -15,8 +15,20 @@ div p {
     margin: 20px;
     padding: 20px;
 }
-textarea {
+textarea, select, .val {
 	width: 40%;
 	margin: 2%;
-	white-space: nowrap;
+}
+textarea {
+    white-space: nowrap;
+}
+input {
+    text-align: right;
+}
+.placeholder {
+    visibility: hidden;
+}
+.del {
+    background-color: white;
+    border: none;
 }
