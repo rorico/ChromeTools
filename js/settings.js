@@ -15,28 +15,23 @@ var userSettings = {};
                 log(chrome.runtime.lastError);
             }
             if (items.settings) {
-                updateSettings(item.settings);
+                updateSettings(items.settings);
             }
         });
     }
 
-    getSetting = function(setting, onchange) {
+    onSettingChange = function(setting, onchange) {
         if (!listeners[setting]) {
             listeners[setting] = [];
         }
         listeners[setting].push(onchange);
-        onchange(settings[setting]);
     }
 
     updateSetting = function(setting, val) {
         if (settings[setting] != val) {
-            settings[setting] = val;
             updateListeners(settings[setting], val);
-            chome.storage.sync.set(settingName, settings, () => {
-                if (chrome.runtime.lastError) {
-                    log(chrome.runtime.lastError);
-                }
-            });
+            settings[setting] = val;
+            storeSettings();
         }
     }
 
@@ -49,7 +44,7 @@ var userSettings = {};
         settings = newSettings;
         // copy array, settings will be changed later
         userSettings = JSON.parse(JSON.stringify(newSettings));
-        console.log(userSettings)
+        storeSettings();
         for (var d in defaults) {
             if (!settings[d]) {
                 settings[d] = defaults[d];
@@ -60,17 +55,27 @@ var userSettings = {};
     addDefault = function(setting, val) {
         defaults[setting] = val;
         if (settings[setting] != val) {
-            settings[setting] = val;
             updateListeners(settings[setting], val);
+            settings[setting] = val;
         }
     }
 
     function updateListeners(setting, val) {
         if (listeners[setting]) {
             listeners[setting].forEach(onchange => {
-                onchange(val);
+                onchange(val, settings[setting]);
             });
         }
+    }
+
+    function storeSettings() {
+        var obj = {}
+        obj[settingName] = settings;
+        chrome.storage.sync.set(obj, () => {
+            if (chrome.runtime.lastError) {
+                log(chrome.runtime.lastError);
+            }
+        });
     }
 
     // TODO: settings display names, type checking
