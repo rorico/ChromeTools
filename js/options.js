@@ -261,7 +261,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             html += "<option selected disabled></option>";
         }
         for (var d in defaults) {
-            html += "<option value='" + d + "'" + (d === setting ? " selected" : "") + ">" + d + "</option>";
+            html += "<option value='" + d + "'" + (d === setting ? " selected" : "") + ">" + defaults[d][2] + "</option>";
         }
         html += "</select>";
         var select = $(html);
@@ -283,12 +283,14 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         select.change(function() {
             var key = select.val();
             if (defaults[key]) {
+                var placeholder = defaults[key][1] == "json" ? JSON.stringify(defaults[key][0]) : defaults[key][0];
                 if (empty) {
                     notEmpty();
+                    input.attr("value", placeholder);
                     $("#settings").append(settingRow());
                 }
                 empty = false;
-                input.attr("placeholder", defaults[key]);
+                input.attr("placeholder", placeholder);
             } else {
                 input.removeAttr("placeholder");
             }
@@ -303,8 +305,22 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var key = $($this.find(".setting")).val();
             var val = $($this.find(".val")).val();
             if (key && val) {
-                // for now all values are integer
-                set[key] = +val;
+                var cast;
+                switch (defaults[key][1]) {
+                    case "int":
+                    cast = +val;
+                    break;
+                    case "str":
+                    cast = "" + val;
+                    break;
+                    case "json":
+                    cast = JSON.parse(val);
+                    break;
+                    default:
+                    cast = val;
+                    break;
+                }
+                set[key] = cast;
             }
         });
         backgroundPage.updateSettings(set);

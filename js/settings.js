@@ -29,7 +29,7 @@ var userSettings = {};
 
     updateSetting = function(setting, val) {
         if (settings[setting] != val) {
-            updateListeners(settings[setting], val);
+            updateListeners(setting, val);
             settings[setting] = val;
             storeSettings();
         }
@@ -42,18 +42,18 @@ var userSettings = {};
             }
         }
         settings = newSettings;
+        storeSettings();
         // copy array, settings will be changed later
         userSettings = JSON.parse(JSON.stringify(newSettings));
-        storeSettings();
         for (var d in defaults) {
             if (!settings[d]) {
-                settings[d] = defaults[d];
+                settings[d] = defaults[d][0];
             }
         }
     }
 
-    addDefault = function(setting, val) {
-        defaults[setting] = val;
+    addDefault = function(setting, val, type, display) {
+        defaults[setting] = [val, type, display || setting];
         if (settings[setting] != val) {
             updateListeners(settings[setting], val);
             settings[setting] = val;

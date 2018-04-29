@@ -22,7 +22,8 @@ var isBlocked;
     var nextNoBlock = Infinity;
     var noBlockTimer;
     //sites that will block after time spent
-    var urls = [[
+    // TODO: better system for this, more check
+    addDefault("blockUrls", [[
         "*://reddit.com/*","*://*.reddit.com/*",
         "http://threesjs.com/"
     ],
@@ -30,17 +31,17 @@ var isBlocked;
     [
         "*://*.youtube.com/*",
         "*://imgur.com/*","*://*.imgur.com/*"
-    ]];
+    ]], "json");
 
-    addDefault("timeLineLength", 1800000); // 30 mins
-    addDefault("startingTimeLeft", 300000); // 5 mins
-    addDefault("VIPlength", 20000); // 20s
-    addDefault("zeroLength", 1800000); // 30 mins
-    addDefault("tolerance", 2000); // 2s
-    addDefault("quickTabTime", 400); // 0.4s
+    addDefault("timeLineLength", 1800000, "int"); // 30 mins
+    addDefault("startingTimeLeft", 300000, "int"); // 5 mins
+    addDefault("VIPlength", 20000, "int"); // 20s
+    addDefault("zeroLength", 1800000, "int"); // 30 mins
+    addDefault("tolerance", 2000, "int"); // 2s
+    addDefault("quickTabTime", 400, "int"); // 0.4s
     if (0) { // if in testing mode
-        addDefault("timeLineLength", 120000); // 2 mins
-        addDefault("startingTimeLeft", 60000); // 1 mins
+        addDefault("timeLineLength", 120000, "int"); // 2 mins
+        addDefault("startingTimeLeft", 60000, "int"); // 1 mins
     }
     // might need to move to let functions load first
     onSettingChange("startingTimeLeft", (newS, oldS) => {
@@ -260,9 +261,9 @@ var isBlocked;
 
     //checks all levels and returns the level of url if matched, 0 if none
     function matchesURL(url) {
-        for (var lvl = 0 ; lvl < urls.length ; lvl++) {
-            for (var i = 0 ; i < urls[lvl].length ; i++) {
-                if (new RegExp("^" + urls[lvl][i].replace(/\./g,"\\.").replace(/\*/g, ".*") + "$").test(url)) {
+        for (var lvl = 0 ; lvl < settings.blockUrls.length ; lvl++) {
+            for (var i = 0 ; i < settings.blockUrls[lvl].length ; i++) {
+                if (new RegExp("^" + settings.blockUrls[lvl][i].replace(/\./g,"\\.").replace(/\*/g, ".*") + "$").test(url)) {
                     return lvl + 1;
                 }
             }
