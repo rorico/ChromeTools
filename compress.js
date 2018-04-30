@@ -32,6 +32,7 @@ var manifestFile = "./manifest.json";
 //update version
 var manifest = require(manifestFile);
 manifest.version = semver.inc(manifest.version,updateType);
+console.log(manifest.version);
 writeFile(manifestFile,JSON.stringify(manifest,null,2),true);
 
 //makes minifiedFolder
