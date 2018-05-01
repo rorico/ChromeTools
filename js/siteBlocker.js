@@ -531,7 +531,7 @@ var isBlocked;
                 if (type === "time") {
                     info = {
                         //just for setup
-                        timeLineLength: settings.timeLineLength,
+                        settings: settings,
                         iframeInfo: iframeInfo,
                         delay: blockTime
                     };
@@ -555,7 +555,7 @@ var isBlocked;
                         url: url,
                         title: title,
                         timeLine: timeLine,
-                        timeLineLength: settings.timeLineLength,
+                        settings: settings,
                         noBlocks: noBlocks
                     };
                 }
