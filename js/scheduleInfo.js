@@ -4,6 +4,10 @@ var today;
 var timezoneOffset = date.getTimezoneOffset() * 60 * 1000;
 setScheduleInfo();
 
+// settings for schedule display
+addDefault("startHour", 7, "int");  // 7am
+addDefault("endHour", 19, "int");   // 7pm
+
 addMessageListener({
     "resetSchedule": setScheduleInfo,
     "weekSchedule": function(a,b,c) {

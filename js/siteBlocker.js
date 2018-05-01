@@ -527,7 +527,7 @@ var isBlocked;
         function prepareBlock(tab,type,blockTime) {
             if (tab === tabId) {
                 //iframes need time to load, load beforehand if can
-                var info = {};
+                var info = {settings: settings};
                 if (type === "time") {
                     info = {
                         //just for setup
