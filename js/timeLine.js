@@ -24,11 +24,11 @@ var timeLineInit;
     var find;
 
     //for setup key presses
-    var keyPhrases = [["RESET",resetTimeLine,20],
-                    ["VIP",VIP,18],
-                    ["FINISH",finish,15],
-                    ["CHANGE",change,10],
-                    ["TEMP",tempVIP],
+    var keyPhrases = [["RESET",resetTimeLine,20,true],
+                    ["VIP",VIP,18,true],
+                    ["FINISH",finish,15,true],
+                    ["CHANGE",change,10,true],
+                    ["TEMP",tempVIP,0,true],
                     ["NO",zero],
                     ["MO",antizero,8],
                     ["P",skipAd],

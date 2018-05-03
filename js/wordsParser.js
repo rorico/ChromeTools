@@ -10,6 +10,11 @@ function randomWord(minLength, maxLength) {
 
 addMessageListener({
     "randomWord": function(a,b,c) {
-        c(randomWord(a.input[0],a.input[1]));
+    	// wasteStreak from siteBlocker
+    	var ret = [];
+    	for (var i = 0 ; i < a.input[2] + (a.input[3] ? wasteStreak : 0) ; i++) {
+    		ret.push(randomWord(a.input[0],a.input[1]))
+    	}
+        c(ret);
     }
 });

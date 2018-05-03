@@ -6,6 +6,8 @@ var title = "";
 var timeLeft = 0;
 var timeLine = [];
 var noBlocks = [];
+// used in wordsParser
+var wasteStreak = 0;
 
 //functions
 var isBlocked;
@@ -330,6 +332,12 @@ var isBlocked;
                     if (classInfo[2]) {
                         blockType = "schedule";
                     }
+                }
+
+                // reset wasteStreak when timeLeft goes positive
+                // kinda sketchy way to do this, want to do before user given time
+                if (time > 0) {
+                    wasteStreak = 0;
                 }
 
                 //don't even bother if more time left than limit
@@ -694,6 +702,7 @@ var isBlocked;
 
     //VIP until pagechange
     function finish() {
+        wasteStreak++;
         VIP();
         //startTime only changes on newPage
         finishTime = startTime;
@@ -710,6 +719,7 @@ var isBlocked;
     }
 
     function tempVIP() {
+        wasteStreak++;
         //so that you can't auto finish from temps
         handleNewPage(url,title);
         makeCurrentTabVIP();
@@ -722,6 +732,7 @@ var isBlocked;
     }
 
     function change(timeLineIndex) {
+        wasteStreak++;
         if (timeLineIndex === -1) {
             if (wastingTime) {
                 //change the current one and restart counter

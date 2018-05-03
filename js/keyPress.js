@@ -10,6 +10,7 @@ var addNumberListener;
     var currentPhrase = 0;
     var phraseIndex = 0;
     var allowMistakes = false;
+
     keyPressInit = function(container) {
         phrases = [];
         container.prepend("<div id='chromeTools_keyPress'></div>");
@@ -27,10 +28,12 @@ var addNumberListener;
                     if (++phraseIndex === currentPhrase[0].length) {
                         $("#phrase").addClass("done");
                         var fnc = currentPhrase[1];
-                        var hard = currentPhrase[2];
+                        var waste = currentPhrase[3];
+                        var num = currentPhrase[2] ? 1 : 0;
+                        var size = currentPhrase[2] || currentPhrase[0].length;
                         clearHotkey();
-                        if (hard) {
-                            double(fnc,hard);
+                        if (waste || num) {
+                            double(fnc, size, num, waste);
                         } else {
                             fnc();
                         }
@@ -197,13 +200,20 @@ var addNumberListener;
         allowMistakes = false;
     }
 
-    function double(funct,length) {
+    function double(funct, length, num, waste) {
         //add another test
-        sendRequest("randomWord",[length - 2, length + 2],function(random) {
-            random = random.toUpperCase();
-            currentPhrase = [random,funct];
-            startShowHotkey(random,false);
-        })
+        sendRequest("randomWord",[length - 2, length + 2, num, waste],function(random) {
+            var rec = () => {
+                if (random.length) {
+                    var phrase = random.pop().toUpperCase();
+                    currentPhrase = [phrase,rec];
+                    startShowHotkey(phrase,false);
+                } else {
+                    funct();
+                }
+            }
+            rec();
+        });
     }
 
     //send requests to background
