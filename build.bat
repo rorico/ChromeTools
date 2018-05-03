@@ -10,5 +10,6 @@ for /f "delims=" %%A in ('node compress.js %1') do (
 		git tag "%%A"
 	) ELSE (
 		rd /s /q minified
+		git checkout manifest.json
 	)
 )
