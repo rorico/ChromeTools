@@ -5,7 +5,7 @@
 var alarms = [];
 var numMaxAlarms = 3;
 
-var typeColors = ["#0000FF","#33FFFF","#FF0000"];   //["blue","teal","red"];
+var typeColors = ["#0000FF","#008000","#FF0000"];   //["blue","green","red"];
 var defaultColor = "#000000";   //black
 var alarmCnt = 0;
 var ringingCnt = 0;
@@ -44,11 +44,13 @@ function setSleepAlarm() {
         date.setHours(sleepAlarmStart);
         date.setMinutes(0);
     }
+    // show 5 minutes beforehand, allow user to cancel beforehand.
+    date -= 5 * 60000;
     setTimer(function() {
         // if computer sleeps or something, this runs a lot later, check if it's past end time
         var date = new Date();
         if (inSleepRange(date)) {
-            setAlarm(0,1);
+            setAlarm(5,1);
         }
         setSleepAlarm();
     },date - new Date());
@@ -57,6 +59,7 @@ function setSleepAlarm() {
     }
 }
 
+// delay in minutes
 function setAlarm(delay,type) {
     for (var i = 0 ; i < numMaxAlarms ; i++) {
         var alarm = alarms[i];
@@ -100,10 +103,15 @@ function setRing(alarmObj,alarmNumber,delay) {
 
                 //sleep auto snoozes
                 if (alarmObj.type === 1) {
+                    var date = new Date();
+                    // alarm lasts longer the more into the night it goes
+                    var amount = 5 * ((date.getHours() - sleepAlarmStart + 24) % 24);
+                    amount += (date.getMinutes() % 30) / 5;
+
                     timeout = setTimeout(function() {
                         removeAlarm(alarmNumber,alarmObj.type);
                         setAlarm(5,1);
-                    },5000);//5 seconds
+                    },amount * 1000);
                 } else if (alarmObj.type === 2) {
                     timeout = setTimeout(function() {
                         removeAlarm(alarmNumber,alarmObj.type);
