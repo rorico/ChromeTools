@@ -266,7 +266,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         html += "</select>";
         var select = $(html);
         ele.append(select);
-        var input = $("<input type='text' class='val'" + (val ? " value='" + val + "'" : "") + ">");
+        var input = $("<input type='text' class='val'" + (val ? " value='" + JSON.stringify(val) + "'" : "") + ">");
         ele.append(input);
         var notEmpty = () => {
             var del = $("<input type='button' class='del' value='&#10006;'>");
