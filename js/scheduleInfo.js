@@ -14,7 +14,7 @@ addMessageListener({
         weekSchedule(a.input,c);
     }
 });
-
+setNextDay();
 
 var scheduleListeners = [];
 function addScheduleListener(funct) {
@@ -37,6 +37,17 @@ function setScheduleInfo() {
             scheduleListeners[i](today);
         }
     });
+}
+
+// update today when next day passes
+function setNextDay() {
+    date = new Date();
+    var nextDay = new Date(date.getFullYear(),date.getMonth(),date.getDate() + 1);
+    console.log(nextDay)
+    setTimer(function() {
+        setScheduleInfo();
+        setNextDay();
+    },nextDay - date);
 }
 
 var todaySchedule = (function() {
