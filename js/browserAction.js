@@ -46,9 +46,23 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     //due to alt tabbing out of game to close alarm multiple times and expecting it not to be open
     //if browserAction becomes more than alarm, remove this
     //consider also making a certain time after last action
-    setTimeout(function() {
-        window.close();
-    },60000);//1 minute
+    var lastInteraction = new Date();
+    $("body").keydown((e) => {
+        lastInteraction = new Date();
+    });
+    var cT;
+    function close() {
+        // 1 minute
+        var diff = 5000 - (new Date() - lastInteraction);
+        if (diff < 0) {
+            window.close();
+        } else {
+            var cT = setTimeout(function() {
+                close();
+            },diff);
+        }
+    }
+    close();
 
     //list entries in format [ele, enable] or ele, depending on enable
     function topButton(list,symbol,side,enable,clickCallback) {
