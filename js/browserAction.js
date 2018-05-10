@@ -53,7 +53,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     var cT;
     function close() {
         // 1 minute
-        var diff = 5000 - (new Date() - lastInteraction);
+        var diff = 60000 - (new Date() - lastInteraction);
         if (diff < 0) {
             window.close();
         } else {
