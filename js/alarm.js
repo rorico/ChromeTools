@@ -105,7 +105,7 @@ function setRing(alarmObj,alarmNumber,delay) {
                 if (alarmObj.type === 1) {
                     var date = new Date();
                     // alarm lasts longer the more into the night it goes
-                    var amount = 5 * ((date.getHours() - sleepAlarmStart + 24) % 24);
+                    var amount = 5 * ((date.getHours() - sleepAlarmStart + 25) % 24);
                     amount += (date.getMinutes() % 30) / 5;
 
                     timeout = setTimeout(function() {
