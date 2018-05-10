@@ -1,5 +1,6 @@
 setlocal EnableDelayedExpansion
-for /f "delims=" %%A in ('node compress.js %1') do (
+set /p inc="Version increment (patch):"
+for /f "delims=" %%A in ('node compress.js %inc%') do (
 	IF !errorlevel! == 0 IF NOT "%%A" == "" (
 		DEL "Chrome Tools.zip"
 		7z a "Chrome Tools.zip" minified -tzip -sdel
