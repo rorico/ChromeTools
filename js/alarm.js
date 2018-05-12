@@ -39,7 +39,7 @@ addMessageListener({
 function setSleepAlarm() {
     var date = new Date();
     date.setSeconds(0);
-    date.setMinutes(Math.floor(date.getMinutes()/30)*30 + 30);
+    date.setMinutes(Math.floor((date.getMinutes() + 5)/30)*30 + 30);
     if (!inSleepRange(date)) {
         date.setHours(sleepAlarmStart);
         date.setMinutes(0);
