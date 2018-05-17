@@ -43,7 +43,6 @@ function setScheduleInfo() {
 function setNextDay() {
     date = new Date();
     var nextDay = new Date(date.getFullYear(),date.getMonth(),date.getDate() + 1);
-    console.log(nextDay)
     setTimer(function() {
         setScheduleInfo();
         setNextDay();
