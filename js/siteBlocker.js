@@ -19,7 +19,7 @@ var isBlocked;
     var VIPtab = -1;
     var tempVIPtimer = -1;
     var tempVIPstartTime = 0;
-    var finishTime = 0;
+    var finishTab = false;
     var nextTime = 0;
     var nextNoBlock = Infinity;
     var noBlockTimer;
@@ -177,6 +177,16 @@ var isBlocked;
     });
 
     chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {
+        // finish keyword updates on page changes, check here
+        // want to keep track even if current 
+        if (finishTab && id === VIPtab) {
+            // this should be the same as for handleNewTab
+            if (changeInfo && changeInfo.status === "loading") {
+                    finishTab = false;
+                    VIPtab = -1;
+            }
+        }
+
         if (tabId === id && changeInfo) {
             if (changeInfo.status === "loading") {
                 handleNewTab(tab);
@@ -314,9 +324,8 @@ var isBlocked;
             var countDown = wastingTime;
             var blockType = "time";
 
-            if (VIPtab === tabId && !tempVIPstartTime && !(finishTime && !checkFinish())) {
+            if (VIPtab === tabId && !tempVIPstartTime) {
                 //if tempVIPstartTime is not set, VIP isn't temp
-                //if finishTime is set, but checkFinish is false, isn't actually VIP
                 time = Infinity;
                 countDown = false;
             } else {
@@ -690,7 +699,7 @@ var isBlocked;
 
     function makeCurrentTabVIP() {
         clearTimeout(tempVIPtimer);
-        finishTime = 0;
+        finishTab = false;
         VIPtab = tabId;
     }
 
@@ -705,17 +714,7 @@ var isBlocked;
         wasteStreak++;
         VIP();
         //startTime only changes on newPage
-        finishTime = startTime;
-    }
-
-    function checkFinish() {
-        if (finishTime === startTime) {
-            return true;
-        } else {
-            finishTime = 0;
-            VIPtab = -1;
-            return false;
-        }
+        finishTab = true;
     }
 
     function tempVIP() {
