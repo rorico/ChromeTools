@@ -7,7 +7,7 @@ var timeLeft = 0;
 var timeLine = [];
 var noBlocks = [];
 // used in wordsParser
-var wasteStreak = 0;
+var getWasteStreak;
 
 //functions
 var isBlocked;
@@ -23,6 +23,10 @@ var isBlocked;
     var nextTime = 0;
     var nextNoBlock = Infinity;
     var noBlockTimer;
+
+    // used in wordsParser
+    var wasteStreak = 0;
+
     //sites that will block after time spent
     // TODO: better system for this, more check
     addDefault("blockUrls", [[
@@ -74,6 +78,11 @@ var isBlocked;
 
     //set-up first time when opened
     startTimeLine();
+
+    getWasteStreak = function () {
+        // worse the more wasting, and the more keywords used
+        return wasteStreak + (timeLeft < 0 ? Math.floor(-timeLeft / settings.startingTimeLeft) : 0);
+    }
 
     function addNoBlock(start,stop,info) {
         var index = noBlocks.length;
