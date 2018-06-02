@@ -69,7 +69,6 @@ var timeLineInit;
 
         timeLineLength = background.settings.timeLineLength;
         setTimeLine(background);
-        countDown(timeLeft);
 
         // setup keypress
         addPhrases(keyPhrases);
@@ -136,6 +135,7 @@ var timeLineInit;
         timeLine = background.timeLine ? JSON.parse(JSON.stringify(background.timeLine)) : [];
         find("#timeLine > div").empty();
         timeLineCreate();
+        countDown(timeLeft);
     }
 
     function timeLineCreate() {
