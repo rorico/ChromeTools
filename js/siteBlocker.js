@@ -45,9 +45,11 @@ var isBlocked;
     addDefault("zeroLength", 1800000, "int"); // 30 mins
     addDefault("tolerance", 2000, "int"); // 2s
     addDefault("quickTabTime", 400, "int"); // 0.4s
+    addDefault("minChange", 1200000, "int"); // 20 mins
     if (0) { // if in testing mode
         addDefault("timeLineLength", 120000, "int"); // 2 mins
         addDefault("startingTimeLeft", 60000, "int"); // 1 mins
+        addDefault("minChange", 60000, "int"); // 1 mins
     }
     // might need to move to let functions load first
     onSettingChange("startingTimeLeft", (newS, oldS) => {
@@ -739,9 +741,12 @@ var isBlocked;
         timeLeftOutput();
     }
 
+    // change wastingTime, supposed to be for when afk on a page
     function change(timeLineIndex) {
-        wasteStreak++;
         if (timeLineIndex === -1) {
+            if (new Date() - startTime < settings.minChange) {
+                return;
+            }
             if (wastingTime) {
                 //change the current one and restart counter
                 sendContent("change",[timeLineIndex,wastingTime]);
@@ -749,10 +754,14 @@ var isBlocked;
                 handleNewPage(url,title);
             }
         } else {
+            if (timeLine[timeLineIndex] < settings.minChange) {
+                return;
+            }
             modifyTimeLine("change",timeLineIndex);
         }
         returnTime();
         timeLeftOutput();
+        wasteStreak++;
     }
 
     function zero() {
