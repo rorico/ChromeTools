@@ -27,7 +27,7 @@ var timeLineInit;
     var keyPhrases = [["RESET",resetTimeLine,20,true],
                     ["VIP",VIP,18,true],
                     ["FINISH",finish,12,true],
-                    ["CHANGE",change,15,true],
+                    ["CHANGE",change,15],
                     ["TEMP",tempVIP,0,true],
                     ["NO",zero],
                     ["MO",antizero,8],
