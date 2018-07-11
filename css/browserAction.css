@@ -61,12 +61,3 @@ div p {
 .notSet {
     opacity: 0.3;
 }
-#info {
-    padding-left: 20px;
-    padding-right: 20px;
-}
-.ellipsis {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
