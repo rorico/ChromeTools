@@ -1,6 +1,6 @@
 //set global variables, these are likely used by browserAction
 var startTime = new Date();
-var wastingTime = false;
+var wastingTime = 0;
 var url = "";
 var title = "";
 var timeLeft = 0;
@@ -23,6 +23,7 @@ var isBlocked;
     var nextTime = 0;
     var nextNoBlock = Infinity;
     var noBlockTimer;
+    var windows = {};
 
     // used in wordsParser
     var wasteStreak = 0;
@@ -63,7 +64,6 @@ var isBlocked;
     var blockTab;
     var unblockSite;
     var sendContent;
-    var getBlockedUrl;
 
     addMessageListener({
         "VIP": VIP,
@@ -171,12 +171,21 @@ var isBlocked;
 
     function startTimeLine() {
         chrome.tabs.query({active:true}, function(tabs) {
-            if (tabs.length) {
-                var activeTab = tabs[0];
-                tabId = activeTab.id;
-                windowId = activeTab.windowId;
-                handleNewTab(activeTab);
-            }
+            // just to get variables set properly, can do this more efficiently
+            var newTab = (tab) => {
+                tabId = tab.id;
+                windowId = tab.windowId;
+                handleNewTab(tab);
+            };
+            tabs.forEach(newTab);
+            // can run these simutaneous, but too lazy
+            chrome.windows.getCurrent((window) => {
+                tabs.forEach((tab) => {
+                    if (tab.windowId === window.windowId) {
+                        newTab(tab);
+                    }
+                });
+            });
         });
     }
 
@@ -204,7 +213,10 @@ var isBlocked;
             } else if (changeInfo.title) {
                 //this should be consistent with handleNewTab
                 //want to change, but this is simpler for now
-                title = tab.incognito ? "incognito" : changeInfo.title;
+                if (windows[windowId].tab === id) {
+                    title = tab.incognito ? "incognito" : changeInfo.title;
+                    windows[windowId].title = title;
+                }
             }
         }
     });
@@ -236,6 +248,12 @@ var isBlocked;
         }
     });
 
+    chrome.windows.onRemoved.addListener(function(id) {
+        if (windows[id]) {
+            delete windows[id];
+        }
+    });
+
     //just a wrapper for handleNewPage
     function handleNewTab(tab) {
         handleNewPage(tab.url,tab.title,tab.incognito);
@@ -260,10 +278,29 @@ var isBlocked;
         }
         //handle new page
         startTime = new Date();     //consider converting to integer right here
-        wastingTime = newWasting;
         //TODO, make incognito a setting
         url = incognito ? "incognito" : newUrl;
         title = incognito ? "incognito" : newTitle;
+
+        // if any of the open windows are wasting time, wastingTime = true, info is overwritten
+        // also assumes the windowId and tabId global variables are updated properly
+        windows[windowId] = {
+            wasting: newWasting,
+            title: newTitle,
+            url: newUrl,
+            tab: tabId,
+            window: windowId
+        };
+        wastingTime = newWasting;
+        for (var w in windows) {
+            // lower wasting time is higher priority, but 0 is lowest, might was to reverse order
+            if (!wastingTime || (windows[w].wasting && windows[w].wasting < wastingTime)) {
+                wastingTime = windows[w].wasting;
+                url = windows[w].url;
+                title = windows[w].title;
+            }
+        }
+
         timeLeftOutput();
 
         //to browserAction, doesn't happen often, but can happen
@@ -334,11 +371,13 @@ var isBlocked;
             var endTime = 0;
             var countDown = wastingTime;
             var blockType = "time";
+            var oneTab = false;
 
             if (VIPtab === tabId && !tempVIPstartTime) {
                 //if tempVIPstartTime is not set, VIP isn't temp
                 time = Infinity;
                 countDown = false;
+                oneTab = true;
             } else {
                 //just check if reminder is needed for this time.
                 if (date > nextNoBlock) {
@@ -369,13 +408,14 @@ var isBlocked;
                     }
                     time = VIPtimeLeft;
                     countDown = true;
+                    oneTab = true;
                     //when this turns to 0, will not show actual time left, may want to fix this later
                 }
             }
 
             countDownTimer(time,endTime,countDown);
             // this can change timeline, so put at very bottom
-            blockTab(time,countDown,blockType);
+            blockTab(time,countDown,blockType,oneTab);
         }
 
         function countDownTimer(time,endTime,countDown) {
@@ -422,51 +462,167 @@ var isBlocked;
 
     (function() {
         var blockTimer = -1;
-        var blockedTab = -2;
-        var blocked = false; //hold whether the tab should currently be blocked
-        var blockType;
-        var blockedUrl;
-        var blockedTitle;
+        var blocked = [];
 
         //sets a reminder when timeLeft reaches 0, and blocks site
-        blockTab = function(time,countDown,blockType) {
-            //do not unblock the site if tab hasn't changed and still no timeLeft
-            if (tabId !== blockedTab || time > 0) {
-                unblockSite();
+        blockTab = function(time,countDown,blockType,oneTab) {
+            // on blocked tab per window (all foreground should be blocked)
+            if (oneTab) {
+                // use some to end early
+                blocked.some((b) => {
+                    if (b.window == windowId) {
+                        // do not unblock the site if tab hasn't changed and still no timeLeft
+                        if (!(b.tab == tabId && time < 0)) {
+                            unblockTab(b.tab);
+                        }
+                        return true;
+                    }
+                });
+            } else if (time > 0) {
+                unblockAll();
             }
+
             clearTimeout(blockTimer);
             if (countDown && wastingTime) {
                 if (time < settings.tolerance) {
                     time = settings.tolerance;
                 }
-                block(tabId,time,blockType);
+                block(Object.values(windows).filter((w) => {
+                    return w.wasting;
+                }), time, blockType);
             }
         };
 
-        function block(tabId,time,blockType) {
+        function block(tabs,time,blockType) {
             //instead of increasing time for wastingTime 2, let it finish, but ring once
             if (wastingTime === 2 && time + +new Date() - startTime > settings.VIPlength + settings.tolerance) {
                 blockTimer = setTimeout(function() {
-                    finish();
+                    // only doing one of them, might change later
+                    finish(tabs[0].tab);
                     setAlarm(0,2);
                 },time);
             } else {
                 var start = +new Date();
                 var delay = Math.max(time - settings.tolerance,settings.quickTabTime);
                 blockTimer = setTimeout(function() {
-                    //note, won't inject if already injected
-                    injectScripts(tabId,blockType,function(ready) {
-                        if (ready) {
-                            var delay = time - new Date() + start;
-                            prepareBlock(tabId,blockType,delay);
-                            blockTimer = setTimeout(function() {
-                                blockSite(tabId,blockType);
-                            },delay);
+                    var readys = tabs.map(() => false);
+                    // when both callbacks end, block
+                    var block = (tab, i) => {
+                        if (readys[i]) {
+                            blockSite(tab,blockType);
                         }
+                        readys[i] = true;
+                    }
+                    tabs.forEach((tab, i) => {
+                        //note, won't inject if already injected
+                        injectScripts(tab.tab,blockType,function(ready) {
+                            if (ready) {
+                                prepareBlock(tab,blockType,delay);
+                                block(tab, i);
+                            }
+                        });
                     });
+
+                    var delay = time - new Date() + start;
+                    blockTimer = setTimeout(() => {
+                        tabs.forEach(block);
+                    },delay);
                 },delay);
             }
         }
+
+        function prepareBlock(tab,type,blockTime) {
+            //if in the time to block, tab changes, don't block
+            if (windows[tab.window].tab === tab.tab) {
+                //iframes need time to load, load beforehand if can
+                var info = {settings: settings};
+                if (type === "time") {
+                    info = {
+                        //just for setup
+                        settings: settings,
+                        iframeInfo: iframeInfo,
+                        delay: blockTime
+                    };
+                }
+                var data = {action:"prepare",info:info,type:type};
+                chrome.tabs.sendMessage(tab.tab,data);
+            }
+        }
+
+        function blockSite(tab,type) {
+            //if in the time to block, tab changes, don't block
+            if (windows[tab.window].tab === tab.tab) {
+
+                if (type === "time") {
+                    var info = {
+                        timeLeft: timeLeft,
+                        startTime: +startTime,
+                        wastingTime: wastingTime,
+                        url: url,
+                        title: title,
+                        timeLine: timeLine,
+                        settings: settings,
+                        noBlocks: noBlocks
+                    };
+                }
+
+                data = {action:"block",info:info,type:type};
+                chrome.tabs.sendMessage(tab.tab,data,function(isBlocked) {
+                    //when page is actually blocked, update timeline
+                    if (isBlocked) {
+                        blocked.push({
+                            type: type,
+                            tab: tab.tab,
+                            window: tab.window,
+                            url: tab.url,
+                            title: tab.title
+                        });
+                        if (tab.tab === tabId) {
+                            handleNewPage("Blocked","Blocked");
+                        }
+                        // storeData("redirect",[+new Date(),url]);
+                    }
+                });
+            }
+        }
+
+        unblockTab = function(tab) {
+            blocked.forEach((b) => {
+                if (b.tab === tab) {
+                    chrome.tabs.sendMessage(b.tab,sendFormat("unblock"));
+                }
+            });
+        };
+
+        unblockAll = function() {
+            var thisTab;
+            blocked.forEach((b) => {
+                chrome.tabs.sendMessage(b.tab,sendFormat("unblock"));
+                if (b.tab === tabId) {
+                    thisTab = b;
+                }
+            });
+            blocked = [];
+            // this needs to be at the end, after blocked is reset
+            if (thisTab) {
+                handleNewPage(thisTab.url,thisTab.title);
+            }
+        };
+
+        sendContent = function(action,input,content) {
+            //only send to content scripts
+            if (!content) {
+                sendRequest(action,input);
+            }
+            blocked.forEach((b) => {
+                chrome.tabs.sendMessage(b.tab,sendFormat(action,input));
+            });
+        };
+
+        isBlocked = function() {
+            //I'm just gonna assume there is no usual url named "Blocked"
+            return url === "Blocked";
+        };
 
         var injectScripts = (function() {
             var injecting = false;
@@ -551,85 +707,6 @@ var isBlocked;
                 }
             }
         })();
-
-        function prepareBlock(tab,type,blockTime) {
-            if (tab === tabId) {
-                //iframes need time to load, load beforehand if can
-                var info = {settings: settings};
-                if (type === "time") {
-                    info = {
-                        //just for setup
-                        settings: settings,
-                        iframeInfo: iframeInfo,
-                        delay: blockTime
-                    };
-                }
-                var data = {action:"prepare",info:info,type:type};
-                chrome.tabs.sendMessage(tab,data);
-            }
-        }
-
-        function blockSite(tab,type) {
-            //if in the time to block, tab changes, don't block
-            if (tab === tabId) {
-                blockedTab = tab;
-                blocked = true;
-                blockType = type;
-                if (blockType === "time") {
-                    var info = {
-                        timeLeft: timeLeft,
-                        startTime: +startTime,
-                        wastingTime: wastingTime,
-                        url: url,
-                        title: title,
-                        timeLine: timeLine,
-                        settings: settings,
-                        noBlocks: noBlocks
-                    };
-                }
-                data = {action:"block",info:info,type:type};
-                chrome.tabs.sendMessage(tab,data,function(blocked) {
-                    //when page is actually blocked, update timeline
-                    if (blocked && tab === tabId) {
-                        blockedUrl = url;
-                        blockedTitle = title;
-                        handleNewPage("Blocked","Blocked");
-                        // storeData("redirect",[+new Date(),url]);
-                    }
-                });
-            }
-        }
-
-        unblockSite = function() {
-            if (blockedTab !== -2) {
-                sendContent("unblock",null,true);
-                blockedTab = -2;
-                blocked = false;
-
-                if (isBlocked()) {
-                    handleNewPage(blockedUrl,blockedTitle);
-                }
-            }
-        };
-
-        sendContent = function(action,input,content) {
-            //only send to content scripts
-            if (!content) {
-                sendRequest(action,input);
-            }
-            if (blockedTab !== -2) {
-                chrome.tabs.sendMessage(blockedTab,sendFormat(action,input));
-            }
-        };
-
-        isBlocked = function() {
-            //I'm just gonna assume there is no usual url named "Blocked"
-            return url === "Blocked";
-        };
-
-        getBlockedUrl = function() {
-            return blockedUrl;
-        };
     })();
 
     function returnTime() {
@@ -721,9 +798,13 @@ var isBlocked;
     }
 
     //VIP until pagechange
-    function finish() {
+    function finish(tab) {
         wasteStreak++;
         VIP();
+        // kinda sketchy, oh well
+        if (tab) {
+            VIPtab = tab;
+        }
         //startTime only changes on newPage
         finishTab = true;
     }
