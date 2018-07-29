@@ -81,7 +81,7 @@ var isBlocked;
     //set-up first time when opened
     startTimeLine();
 
-    getWasteStreak = function () {
+    getWasteStreak = function() {
         // worse the more wasting, and the more keywords used
         return wasteStreak + (timeLeft < 0 ? Math.floor(-timeLeft / settings.startingTimeLeft) : 0);
     }
