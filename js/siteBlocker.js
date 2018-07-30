@@ -467,7 +467,7 @@ var isBlocked;
         //sets a reminder when timeLeft reaches 0, and blocks site
         blockTab = function(time,countDown,blockType,oneTab) {
             // on blocked tab per window (all foreground should be blocked)
-            if (oneTab) {
+            if (oneTab || time < 0) {
                 // use some to end early
                 blocked.some((b) => {
                     if (b.window == windowId) {
@@ -552,7 +552,6 @@ var isBlocked;
         function blockSite(tab,type) {
             //if in the time to block, tab changes, don't block
             if (windows[tab.window].tab === tab.tab) {
-
                 if (type === "time") {
                     var info = {
                         timeLeft: timeLeft,
