@@ -104,21 +104,24 @@
 #chromeTools_keyPress .failed {
     color: red;
 }
+#chromeTools_keyPress #phrase {
+    border: 1px solid black;
+    border-radius: 5px;
+}
 #chromeTools_keyPress .phrasePart {
     display: inline;
     font-size: 100px;
 }
 #chromeTools_keyPress #phraseFront {
     position: absolute;
-    border: 1px solid black;
     border-radius: 5px;
     z-index: 2;
     color: #f0f0f0;
 }
 #chromeTools_keyPress #phraseBack {
-    position: relative;
-    border: 1px solid black;
     border-radius: 5px;
+    text-align: left;
+    position: relative;
     background-color: white;
 }
 #chromeTools_keyPress #phrase.done .filled {

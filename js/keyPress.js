@@ -114,7 +114,7 @@ var addNumberListener;
         }
     };
 
-    function startShowHotkey(phrase,start) {
+    function startShowHotkey(phrase,start,extra) {
         var front = "<div id='phraseFront'>";
         var back = "<div id='phraseBack'>";
         for (var i = 0 ; i < phrase.length ; i++) {
@@ -123,7 +123,7 @@ var addNumberListener;
         }
         front += "</div>";
         back += "</div>";
-        var html = "<div id='phrase'>" + front + back + "</div>";
+        var html = "<div id='phrase'>" + front + back + (extra || "") + "</div>";
 
         var holder = $(holderId);
         var parent = holder.parent();
@@ -135,11 +135,15 @@ var addNumberListener;
             fontSize = Math.floor(fontSize / (holder.width() / maxWidth));
             $(".phrasePart").css("font-size",fontSize);
         }
+
+        var frame = $("#phraseFront");
         //center display
-        var leftOffset = (parent.innerWidth() - holder.outerWidth())/2;
-        var topOffset = (parent.innerHeight() - holder.outerHeight())/2;
+        var leftOffset = (parent.innerWidth() - frame.outerWidth())/2;
+        var topOffset = (parent.innerHeight() - frame.outerHeight())/2;
         //can use css transforms to center, but that makes it blurry
-        holder.css("left",leftOffset).css("top",topOffset);
+        // also bind width so that we can add text below that wraps properly
+        holder.css("left",leftOffset).css("top",topOffset).css("width",frame.outerWidth());
+
         
         if (start) {
             $("#phrase0").addClass("filled");
@@ -160,6 +164,7 @@ var addNumberListener;
     var disappearInterval;
     var disappearTimeout;
     function disappearHotkey(time) {
+        return
         clearInterval(disappearInterval);
         clearTimeout(disappearTimeout);
         if (time > 0) {
@@ -205,9 +210,10 @@ var addNumberListener;
         sendRequest("randomWord",[length - 2, length + 2, num, waste],function(random) {
             var rec = () => {
                 if (random.length) {
-                    var phrase = random.pop().toUpperCase();
+                    var word = random.pop();
+                    var phrase = word[0].toUpperCase();
                     currentPhrase = [phrase,rec];
-                    startShowHotkey(phrase,false);
+                    startShowHotkey(phrase,false,word[1]);
                 } else {
                     funct();
                 }
