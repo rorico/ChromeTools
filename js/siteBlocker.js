@@ -66,7 +66,9 @@ var isBlocked;
 
     addMessageListener({
         "VIP": VIP,
-        "finish": finish,
+        "finish": () => {
+            finish();
+        },
         "resetTime": resetTime,
         "change": function(a) {
             change(a.input);
