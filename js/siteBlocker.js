@@ -62,7 +62,6 @@ var isBlocked;
     
     //functions in their own closure
     var blockTab;
-    var unblockSite;
     var sendContent;
 
     addMessageListener({
@@ -469,11 +468,12 @@ var isBlocked;
             // on blocked tab per window (all foreground should be blocked)
             if (oneTab || time < 0) {
                 // use some to end early
-                blocked.some((b) => {
+                blocked.some((b,i) => {
                     if (b.window == windowId) {
                         // do not unblock the site if tab hasn't changed and still no timeLeft
-                        if (!(b.tab == tabId && time < 0)) {
+                        if (!(b.tab === tabId && time < 0)) {
                             unblockTab(b.tab);
+                            blocked.splice(i,1);
                         }
                         return true;
                     }
@@ -585,18 +585,14 @@ var isBlocked;
             }
         }
 
-        unblockTab = function(tab) {
-            blocked.forEach((b) => {
-                if (b.tab === tab) {
-                    chrome.tabs.sendMessage(b.tab,sendFormat("unblock"));
-                }
-            });
+        function unblockTab(tab) {
+            chrome.tabs.sendMessage(tab,sendFormat("unblock"));
         };
 
-        unblockAll = function() {
+        function unblockAll() {
             var thisTab;
             blocked.forEach((b) => {
-                chrome.tabs.sendMessage(b.tab,sendFormat("unblock"));
+                unblockTab(b.tab);
                 if (b.tab === tabId) {
                     thisTab = b;
                 }
