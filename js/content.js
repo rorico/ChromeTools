@@ -38,7 +38,7 @@ function block(type,info,callback) {
     }
     //hold focus to give back when unblocking
     oldFocus = document.activeElement;
-    blockScreen.addClass("display").focus();
+    focus(blockScreen.addClass("display")[0]);
     hidden = false;
     callback(true);
     return false;
@@ -100,7 +100,7 @@ function init(type,info) {
 function unblock() {
     $("#" + blockId).removeClass("display").blur();
     if (oldFocus) {
-        oldFocus.focus();
+        focus(oldFocus);
     }
     hidden = true;
 }
@@ -138,3 +138,13 @@ function sendRequest(action,input,callback) {
         input: input
     },callback);
 }
+
+function focus(ele) {
+    if (ele.hasAttribute("tabindex")) {
+        ele.focus();
+    } else {
+        ele.setAttribute("tabindex", "-1");
+        ele.focus();
+        ele.removeAttribute("tabindex");
+    }
+} 

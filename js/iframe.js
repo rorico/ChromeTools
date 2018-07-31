@@ -7,6 +7,16 @@ var iframe;
     var ASPECT_RATIO = [16,12];
     iframe = init;
 
+    function getAllEvents(element) {
+    var result = [];
+    for (var key in element) {
+        if (key.indexOf('on') === 0) {
+            result.push(key.slice(2));
+        }
+    }
+    return result.join(' ');
+}
+
     function init(container,background) {
         var iframeInfo = background.iframeInfo;
         //create foundation for iframes
@@ -18,6 +28,7 @@ var iframe;
         container.append(html);
         updateIframes(iframeInfo,true);
         resize();
+        $(document).on("focusout",console.log)
         return {
             resize: resize,
             update: update
@@ -118,6 +129,8 @@ var iframe;
                 init();
             }
             var url = ele.attr("src");
+            console.log(ele)
+            ele.focus(console.log)
             list[url] = false;
             ele.click(function() {
                 list[url] = true;
@@ -128,6 +141,7 @@ var iframe;
             list = {};
 
             $(document).on("focusout",function(e) {
+                console.log(e);
                 //when we call focus, we trigger another focusout, ignore it
                 if (waiting) {
                     waiting = false;
