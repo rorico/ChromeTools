@@ -288,8 +288,8 @@ var isBlocked;
         // also assumes the windowId and tabId global variables are updated properly
         windows[windowId] = {
             wasting: newWasting,
-            title: newTitle,
-            url: newUrl,
+            title: title,
+            url: url,
             tab: tabId,
             window: windowId
         };
