@@ -65,7 +65,8 @@ var isBlocked;
     var sendContent;
 
     addMessageListener({
-        "VIP": VIP,
+        "VIP": () => {
+        },
         "finish": () => {
             finish();
         },
@@ -782,14 +783,14 @@ var isBlocked;
         sendContent("reset",info);
     }
 
-    function makeCurrentTabVIP() {
+    function makeTabVIP(tab) {
         clearTimeout(tempVIPtimer);
         finishTab = false;
-        VIPtab = tabId;
+        VIPtab = tab || tabId;
     }
 
-    function VIP() {
-        makeCurrentTabVIP();
+    function VIP(tab) {
+        makeTabVIP(tab);
         tempVIPstartTime = 0;
         timeLeftOutput();
     }
@@ -797,11 +798,7 @@ var isBlocked;
     //VIP until pagechange
     function finish(tab) {
         wasteStreak++;
-        VIP();
-        // kinda sketchy, oh well
-        if (tab) {
-            VIPtab = tab;
-        }
+        VIP(tab);
         //startTime only changes on newPage
         finishTab = true;
     }
@@ -810,7 +807,7 @@ var isBlocked;
         wasteStreak++;
         //so that you can't auto finish from temps
         handleNewPage(url,title);
-        makeCurrentTabVIP();
+        makeTabVIP();
         tempVIPstartTime = +new Date();
         tempVIPtimer = setTimeout(function() {
             VIPtab = -1;
