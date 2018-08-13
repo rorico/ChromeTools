@@ -263,7 +263,6 @@ var isBlocked;
 
     function handleNewPage(newUrl,newTitle,incognito) {
         //handle previous page
-        var newWasting = matchesURL(newUrl);
         var timeSpent = new Date() - startTime;
         //if small time spent on wasting, don't count
         if (timeSpent < settings.tolerance) {
@@ -284,24 +283,10 @@ var isBlocked;
         url = incognito ? "incognito" : newUrl;
         title = incognito ? "incognito" : newTitle;
 
-        // if any of the open windows are wasting time, wastingTime = true, info is overwritten
-        // also assumes the windowId and tabId global variables are updated properly
-        windows[windowId] = {
-            wasting: newWasting,
-            title: title,
-            url: url,
-            tab: tabId,
-            window: windowId
-        };
-        wastingTime = newWasting;
-        for (var w in windows) {
-            // lower wasting time is higher priority, but 0 is lowest, might was to reverse order
-            if (!wastingTime || (windows[w].wasting && windows[w].wasting < wastingTime)) {
-                wastingTime = windows[w].wasting;
-                url = windows[w].url;
-                title = windows[w].title;
-            }
-        }
+        var result = updateWindow(newUrl,newTitle,incognito,windowId,tabId);
+        url = result.url;
+        title = result.title;
+        wastingTime = result.wasting;
 
         timeLeftOutput();
 
@@ -319,6 +304,43 @@ var isBlocked;
         if (startTime > nextTime + settings.tolerance) {
             returnTime();
         }
+    }
+
+
+    function handleBackgroundPage(newUrl,newTitle,incognito,window) {
+        var result = updateWindow(newUrl,newTitle,incognito,window,windows[window].tab)
+        if (result.wasting !== wastingTime) {
+            // refresh
+            handleNewPage(windows[windowId].url,windows[windowId].title);
+        }
+    }
+
+    function updateWindow(newUrl,newTitle,incognito,windowId,tab) {
+        //TODO, make incognito a setting
+        var url = incognito ? "incognito" : newUrl;
+        var title = incognito ? "incognito" : newTitle;
+        var testWasting = matchesURL(newUrl);
+        // overwrite entire object instead of partial, incase references are kept elsewhere
+        windows[windowId] = {
+            wasting: testWasting,
+            title: title,
+            url: url,
+            tab: tabId,
+            window: windowId
+        };
+        for (var w in windows) {
+            // lower wasting time is higher priority, but 0 is lowest, might was to reverse order
+            if (windows[w].wasting && (!testWasting || (windows[w].wasting < testWasting))) {
+                testWasting = windows[w].wasting;
+                url = windows[w].url;
+                title = windows[w].title;
+            }
+        }
+        return {
+            wasting: testWasting,
+            url: url,
+            title: title
+        };
     }
 
     //checks all levels and returns the level of url if matched, 0 if none
@@ -369,55 +391,80 @@ var isBlocked;
         function timeLeftOutput() {
             sendContent("timer",timeLeft);
             var now = new Date();
-            var time = timeLeft - (wastingTime ? now - startTime : 0);
+            var timeSpent = now - startTime;
+            var time = timeLeft - (wastingTime ? timeSpent : 0);
             var endTime = 0;
             var countDown = wastingTime;
             var blockType = "time";
-            var oneTab = false;
+            var oneTab;
 
-            if (VIPtab === tabId && !tempVIPstartTime) {
-                //if tempVIPstartTime is not set, VIP isn't temp
-                time = Infinity;
-                countDown = false;
-                oneTab = true;
-            } else {
-                //just check if reminder is needed for this time.
-                if (date > nextNoBlock) {
-                    noBlockReminder();
-                }
-                var classInfo = checkNoBlock(now);
-                var classTime = classInfo[0] - now;
-                if (time > classTime) {
-                    time = classTime;
-                    countDown = true;
-                    if (classInfo[2]) {
-                        blockType = "schedule";
-                    }
-                }
-
-                // reset wasteStreak when timeLeft goes positive
-                // kinda sketchy way to do this, want to do before user given time
-                if (time > 0) {
-                    wasteStreak = 0;
-                }
-
-                //don't even bother if more time left than limit
-                var VIPtimeLeft = settings.VIPlength - now + tempVIPstartTime;
-                if (VIPtab === tabId && time < VIPtimeLeft) {
-                    //if not wasting time, vip will countDown, but stop when reach timeLeft
-                    if (!countDown && !wastingTime && time > endTime) {
-                        endTime = time;
-                    }
-                    time = VIPtimeLeft;
-                    countDown = true;
-                    oneTab = true;
-                    //when this turns to 0, will not show actual time left, may want to fix this later
+            //just check if reminder is needed for this time.
+            if (date > nextNoBlock) {
+                noBlockReminder();
+            }
+            var classInfo = checkNoBlock(now);
+            var classTime = classInfo[0] - now;
+            if (time > classTime) {
+                time = classTime;
+                countDown = true;
+                if (classInfo[2]) {
+                    blockType = "schedule";
                 }
             }
 
-            countDownTimer(time,endTime,countDown);
+            // reset wasteStreak when timeLeft goes positive
+            // kinda sketchy way to do this, want to do before user given time
+            if (time > 0) {
+                wasteStreak = 0;
+            }
+
+            var displayTime = time;
+            var blocking = Object.values(windows).filter((w) => w.wasting);
+
+            if (VIPtab !== -1) {
+                var VIPinfo;
+                blocking.some((b,i) => {
+                    if (b.tab === VIPtab) {
+                        // don't block this tab
+                        VIPinfo = blocking.splice(i,1)[0];
+                        return true;
+                    }
+                });
+                var thisTab = VIPtab === tabId;
+                // this handles finish keyword, kinda sketch, but I can't think of an edge case where this doens't work
+                if (thisTab) {
+                    VIPinfo = windows[windowId];
+                }
+                if (!tempVIPstartTime) {
+                    if (VIPinfo) {
+                        oneTab = [VIPinfo,Infinity];
+                    }
+                    if (thisTab) {
+                        displayTime = Infinity;
+                        countDown = false;
+                    }
+                } else {
+                    //don't even bother if more time left than limit
+                    var VIPtimeLeft = settings.VIPlength - now + tempVIPstartTime;
+                    if (time < VIPtimeLeft) {
+                        if (VIPinfo) {
+                            oneTab = [VIPinfo,VIPtimeLeft];
+                        }
+                        if (thisTab) {
+                            //if not wasting time, vip will countDown, but stop when reach timeLeft
+                            if (!countDown && !wastingTime && time > endTime) {
+                                endTime = time;
+                            }
+                            displayTime = VIPtimeLeft;
+                            countDown = true;
+                        }
+                    }
+                }
+            }
+
+            countDownTimer(displayTime,endTime,countDown);
             // this can change timeline, so put at very bottom
-            blockTab(time,countDown,blockType,oneTab);
+            blockTab(blocking,time,blockType,oneTab);
         }
 
         function countDownTimer(time,endTime,countDown) {
@@ -463,19 +510,23 @@ var isBlocked;
     })();
 
     (function() {
-        var blockTimer = -1;
+        var blockTimers = [];
         var blocked = [];
 
         //sets a reminder when timeLeft reaches 0, and blocks site
-        blockTab = function(time,countDown,blockType,oneTab) {
+        blockTab = function(tabs,time,blockType,oneTab) {
             // on blocked tab per window (all foreground should be blocked)
             if (oneTab || time < 0) {
-                // use some to end early
                 blocked.some((b,i) => {
-                    if (b.window == windowId) {
+                    // both of these are independent, but only one happens at a time
+                    if (oneTab && b.tab === oneTab[0].tab) {
+                        unblockTab(b);
+                        blocked.splice(i,1);
+                        return true;
+                    } else if (b.window == windowId) {
                         // do not unblock the site if tab hasn't changed and still no timeLeft
                         if (!(b.tab === tabId && time < 0)) {
-                            unblockTab(b.tab);
+                            unblockTab(b);
                             blocked.splice(i,1);
                         }
                         return true;
@@ -485,53 +536,70 @@ var isBlocked;
                 unblockAll();
             }
 
-            clearTimeout(blockTimer);
-            if (countDown && wastingTime) {
+            blockTimers.forEach(clearTimeout);
+            blockTimers = [];
+            if (tabs.length) {
                 if (time < settings.tolerance) {
                     time = settings.tolerance;
                 }
-                block(Object.values(windows).filter((w) => {
-                    return w.wasting;
-                }), time, blockType);
+                // auto finish
+                if (!oneTab && time + +new Date() - startTime > settings.VIPlength + settings.tolerance) {
+                    var tab = -1;
+                    // finish the focused one
+                    if (windows[windowId].wasting === 2 && windows[windowId].url === url) {
+                        tab = tabId;
+                        tabs = tabs.filter((w) => w.tab !== tabId);
+                    } else {
+                        // if not focused, pick one
+                        tabs.some((b,i) => {
+                            if (b.wasting === 2) {
+                                tab = b.tab;
+                                tabs.splice(i,1);
+                                return true;
+                            }
+                        });
+                    }
+                    if (tab !== -1) {
+                        blockTimers.push(setTimeout(() => {
+                            finish(tab);
+                            setAlarm(0,2);
+                        },time));
+                    }
+                }
+                block(tabs, time, blockType);
+            }
+            if (oneTab && isFinite(oneTab[1])) {
+                block([oneTab[0]], oneTab[1], blockType);
             }
         };
 
         function block(tabs,time,blockType) {
-            //instead of increasing time for wastingTime 2, let it finish, but ring once
-            if (wastingTime === 2 && time + +new Date() - startTime > settings.VIPlength + settings.tolerance) {
-                blockTimer = setTimeout(function() {
-                    // only doing one of them, might change later
-                    finish(tabs[0].tab);
-                    setAlarm(0,2);
-                },time);
-            } else {
-                var start = +new Date();
-                var delay = Math.max(time - settings.tolerance,settings.quickTabTime);
-                blockTimer = setTimeout(function() {
-                    var readys = tabs.map(() => false);
-                    // when both callbacks end, block
-                    var block = (tab, i) => {
-                        if (readys[i]) {
-                            blockSite(tab,blockType);
-                        }
-                        readys[i] = true;
+            var start = +new Date();
+            var delay = Math.max(time - settings.tolerance,settings.quickTabTime);
+            blockTimers.push(setTimeout(() => {
+                var readys = tabs.map(() => false);
+                // when both callbacks end, block
+                var blockC = (tab, i) => {
+                    if (readys[i]) {
+                        blockSite(tab,blockType);
                     }
-                    tabs.forEach((tab, i) => {
-                        //note, won't inject if already injected
-                        injectScripts(tab.tab,blockType,function(ready) {
-                            if (ready) {
-                                prepareBlock(tab,blockType,delay);
-                                block(tab, i);
-                            }
-                        });
+                    readys[i] = true;
+                }
+                tabs.forEach((tab, i) => {
+                    //note, won't inject if already injected
+                    injectScripts(tab.tab,blockType,function(ready) {
+                        if (ready) {
+                            prepareBlock(tab,blockType,delay);
+                            blockC(tab, i);
+                        }
                     });
+                });
 
-                    var delay = time - new Date() + start;
-                    blockTimer = setTimeout(() => {
-                        tabs.forEach(block);
-                    },delay);
-                },delay);
-            }
+                var delay = time - new Date() + start;
+                blockTimers.push(setTimeout(() => {
+                    tabs.forEach(blockC);
+                },delay));
+            },delay));
         }
 
         function prepareBlock(tab,type,blockTime) {
@@ -581,6 +649,8 @@ var isBlocked;
                         });
                         if (tab.tab === tabId) {
                             handleNewPage("Blocked","Blocked");
+                        } else {
+                            handleBackgroundPage("Blocked","Blocked", false, tab.window);
                         }
                         // storeData("redirect",[+new Date(),url]);
                     }
@@ -589,22 +659,24 @@ var isBlocked;
         }
 
         function unblockTab(tab) {
-            chrome.tabs.sendMessage(tab,sendFormat("unblock"));
+            chrome.tabs.sendMessage(tab.tab,sendFormat("unblock"),(unblocked) => {
+                // important to not run in same thread to allow this one to finish to avoid recursion problems
+                if (unblocked) {
+                    if (tab.tab === tabId) {
+                        handleNewPage(tab.url,tab.title);
+                    } else {
+                        handleBackgroundPage(tab.url, tab.title, false, tab.window)
+                    }
+                }
+            });
         };
 
         function unblockAll() {
             var thisTab;
             blocked.forEach((b) => {
-                unblockTab(b.tab);
-                if (b.tab === tabId) {
-                    thisTab = b;
-                }
+                unblockTab(b);
             });
             blocked = [];
-            // this needs to be at the end, after blocked is reset
-            if (thisTab) {
-                handleNewPage(thisTab.url,thisTab.title);
-            }
         };
 
         sendContent = function(action,input,content) {

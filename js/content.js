@@ -119,6 +119,7 @@ chrome.runtime.onMessage.addListener(function listener(a, b, c) {
             return block(a.type,a.info,c);
         case "unblock":
             unblock();
+            c(true);
             break;
         case "ping":
             var blockTypes = {
