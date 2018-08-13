@@ -279,9 +279,6 @@ var isBlocked;
         }
         //handle new page
         startTime = new Date();     //consider converting to integer right here
-        //TODO, make incognito a setting
-        url = incognito ? "incognito" : newUrl;
-        title = incognito ? "incognito" : newTitle;
 
         var result = updateWindow(newUrl,newTitle,incognito,windowId,tabId);
         url = result.url;
@@ -649,7 +646,7 @@ var isBlocked;
                         });
                         if (tab.tab === tabId) {
                             handleNewPage("Blocked","Blocked");
-                        } else {
+                        } else if (tab.tab === windows[tab.window].tab) {
                             handleBackgroundPage("Blocked","Blocked", false, tab.window);
                         }
                         // storeData("redirect",[+new Date(),url]);
@@ -664,7 +661,7 @@ var isBlocked;
                 if (unblocked) {
                     if (tab.tab === tabId) {
                         handleNewPage(tab.url,tab.title);
-                    } else {
+                    } else if (tab.tab === windows[tab.window].tab) {
                         handleBackgroundPage(tab.url, tab.title, false, tab.window)
                     }
                 }
