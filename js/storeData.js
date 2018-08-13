@@ -77,6 +77,7 @@ var getData;
         for (var i = min ; i < max ; i++) {
             indexes.push(name + "_" + i);
         }
+        indexes.push(name + suf);
         return indexes;
     }
 
