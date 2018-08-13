@@ -31,7 +31,7 @@ var getData;
         });
     };
 
-    getData = function(name,callback,unthrotled) {
+    getData = function(name,callback,unthrottled) {
         var metaName = name + metaSuf;
         get(metaName, function(item) {
             var metaData = item[metaName] || {};
