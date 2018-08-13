@@ -268,14 +268,14 @@ var isBlocked;
         if (timeSpent < settings.tolerance) {
             wastingTime = 0;
         }
-        var newest = [timeSpent,wastingTime,url,title,+startTime];
+        var newest = [+startTime,timeSpent,wastingTime,url,title];
         modifyTimeLine("add",newest);
         if (wastingTime) {
             changeTimeLeft(-timeSpent);
-            // //don't want to slow down event handler
-            // setTimeout(function() {
-            //     storeData("timeLine",newest);
-            // },0);
+            //don't want to slow down event handler
+            setTimeout(function() {
+                storeData("wasting",newest);
+            },0);
         }
         //handle new page
         startTime = new Date();     //consider converting to integer right here
@@ -360,10 +360,10 @@ var isBlocked;
             timeLine.splice(load[0],load[1]);
         } else if (action === "change") {
             if (load < timeLine.length || load < 0) {
-                if (timeLine[load][1]) {
-                    sendContent("change",[load,timeLine[load][1]]);
-                    timeLine[load][1] = 0;
-                    changeTimeLeft(timeLine[load][0]);
+                if (timeLine[load][2]) {
+                    sendContent("change",[load,timeLine[load][2]]);
+                    timeLine[load][2] = 0;
+                    changeTimeLeft(timeLine[load][1]);
                 }
             } else {
                 log("change to timeline out of bounds" + load + "/" + timeLine.length);
@@ -649,7 +649,7 @@ var isBlocked;
                         } else if (tab.tab === windows[tab.window].tab) {
                             handleBackgroundPage("Blocked","Blocked", false, tab.window);
                         }
-                        // storeData("redirect",[+new Date(),url]);
+                        storeData("block",[+new Date(),tab.url]);
                     }
                 });
             }
@@ -662,7 +662,8 @@ var isBlocked;
                     if (tab.tab === tabId) {
                         handleNewPage(tab.url,tab.title);
                     } else if (tab.tab === windows[tab.window].tab) {
-                        handleBackgroundPage(tab.url, tab.title, false, tab.window)
+                        // doesn't handle edge case of incognito on unblock
+                        handleBackgroundPage(tab.url, tab.title, false, tab.window);
                     }
                 }
             });
@@ -786,15 +787,15 @@ var isBlocked;
         //remove anything after limit
         for (var i = timeLine.length - 1 ; i != -1 ; i--) {
             //endtime is same as next starttime
-            var endTime = (i ? timeLine[i-1][4] : +timeLine[i][4] + timeLine[i][0]);
+            var endTime = (i ? timeLine[i-1][0] : +timeLine[i][0] + timeLine[i][1]);
             if (date > endTime) {
-                if (timeLine[i][1]) {
-                    timeLeft += timeLine[i][0];
+                if (timeLine[i][2]) {
+                    timeLeft += timeLine[i][1];
                 }
                 cnt++;
             } else {
                 //note if going through entire array, this will never run
-                timeTotal = timeLine[i][4] - date; //negative
+                timeTotal = timeLine[i][0] - date; //negative
                 endingIndex = i;
                 break;
             }
@@ -811,7 +812,7 @@ var isBlocked;
         //ideally check again when can return time again
         var completed = false;
         for (var i = endingIndex ; i != -1 ; i--) {
-            if (timeLine[i][1]) {
+            if (timeLine[i][2]) {
                 //note timeLeft can be negative
                 if (timeLeft - currentTimeOffset > timeTotal) {
                     modifyTimeLine("change",i);
@@ -820,7 +821,7 @@ var isBlocked;
                     break;
                 }
             }
-            timeTotal += timeLine[i][0];
+            timeTotal += timeLine[i][1];
         }
         //if reach end of the list, add current time
         if (!completed) {

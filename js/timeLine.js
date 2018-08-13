@@ -152,15 +152,15 @@ var timeLineInit;
         if (add(-1,startTime,timeCurrent,wastingTime)) {
             var last;
             for (var i = 0; i < timeLine.length ; i++) {
-                if (!add(i,timeLine[i][4],timeLine[i][0],timeLine[i][1])) {
-                    last = timeLine[i][4];
+                if (!add(i,timeLine[i][0],timeLine[i][1],timeLine[i][2])) {
+                    last = timeLine[i][0];
                     break;
                 }
             }
             if (!last) {
                 var lastTime = timeLine[timeLine.length-1];
                 //only really happens if no timeline
-                last = lastTime ? lastTime[4] : now;
+                last = lastTime ? lastTime[0] : now;
             }
             if (last > oldest) {
                 //fill in rest
@@ -274,7 +274,7 @@ var timeLineInit;
                 displayInfo(i,true);
             },delay);
         } else {
-            info = formatInfo(timeLine[i][2],timeLine[i][0],timeLine[i][3]);
+            info = formatInfo(timeLine[i][3],timeLine[i][1],timeLine[i][4]);
             find("#info").html(info);
         }
     }

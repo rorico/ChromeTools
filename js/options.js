@@ -5,11 +5,9 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         var hourAmount = 3600000; //num of millisec
         var defaultZoom = 604800000; //1 week
         processRedirect = function(typeData,level) {
-            var series = [];
-            var zoom = [];
             var options = {
                 title: {
-                    text: "Redirects"
+                    text: null
                 },
                 yAxis: {
                     title: {
@@ -17,60 +15,23 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     }
                 }
             };
-            if (typeData && typeData.length) {
-                var indexes = {};
-                var index = 0;
 
-                for (var j = 0 ; j < typeData.length ; j++) {
-                    var name = getWebsiteName(typeData[j][1],level);
-                    var hour = nearestHour(typeData[j][0]);
-                    var curIndex = indexes[name];
-                    if (curIndex === undefined) {
-                        curIndex = index++;
-                        indexes[name] = curIndex;
-                        //add a 0 before start of data
-                        var newData = [[hour - hourAmount,0]];
-                        series.push({name:name,data:newData});
-                    }
-                    var data = series[curIndex].data;
-                    addRedirectEntry(data,hour);
-                }
-                var last = -Infinity;
-                //add a 0 aftet end of data
-                for (var i = 0 ; i < series.length ; i++) {
-                    var data = series[i].data;
-                    var lastEntry = data[data.length-1][0];
-                    data.push([lastEntry + hourAmount, 0]);
-                    if (lastEntry > last) {
-                        last = lastEntry;
-                    }
-                }
-                zoom = [last - defaultZoom,last];
-            }
+            var res = histogram(typeData, (t) => {
+                return [
+                    nearestHour(t[0]),
+                    getWebsiteName(t[1],level)
+                ];
+            });
+
+            series = res[0];
+            zoom = res[1];
             return {series:series,zoom:zoom,options:options};
         };
-
-        function addRedirectEntry(data,hour) {
-            var pastTime = data[data.length-1][0];
-            if (hour === pastTime) {
-                data[data.length-1][1]++;
-            } else {
-                if (hour-pastTime > hourAmount) {
-                    data.push([pastTime + hourAmount,0]);
-                    data.push([hour - hourAmount,0]);
-                }
-                pastTime = hour;
-                data.push([hour,1]);
-            }
-        }
-
+        
         processTimeLine = function(typeData,level) {
-            var series = [];
-            var zoom = [];
-
             var options = {
                 title: {
-                    text: "TimeLine Wasting Time"
+                    text: null
                 },
                 yAxis: {
                     title: {
@@ -84,72 +45,104 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                 },
                 tooltip: {
                     pointFormatter: function() {
+                        console.log(this)
                         //copied from default with value format changed
                         return "<span style='color:" + this.color + "'>\u25CF</span> " + this.series.name + ": <b>" + MinutesSecondsFormat(this.y) + "</b><br/>";
                     }
                 }
             };
-            if (typeData && typeData.length) {
-                var indexes = {};
-                var index = 0;
+            var res = histogram(typeData, (t) => {
+                return [
+                    t[0],
+                    level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3],level),
+                    t[1]
+                ];
+            });
 
-                for (var j = 0 ; j < typeData.length ; j++) {
-                    var timestamp = typeData[j][4];
-                    if (!timestamp) {
-                        continue;
-                    }
-                    var name = level === 3 ? "Wasting Level " + typeData[j][1] : getWebsiteName(typeData[j][2],level);
-                    var curIndex = indexes[name];
-                    if (curIndex === undefined) {
-                        curIndex = index++;
-                        indexes[name] = curIndex;
-                        //add a 0 before start of data
-                        var newData = [[nearestHour(timestamp) - hourAmount,0]];
-                        series.push({name:name,data:newData});
-                    }
-                    var data = series[curIndex].data;
-                    addTimeLineEntry(data,timestamp,typeData[j][0]);
-                }
-                var last = -Infinity;
-                //add a 0 aftet end of data
-                for (var i = 0 ; i < series.length ; i++) {
-                    var data = series[i].data;
-                    var lastEntry = data[data.length-1][0];
-                    data.push([lastEntry + hourAmount, 0]);
-                    if (lastEntry > last) {
-                        last = lastEntry;
-                    }
-                }
-                zoom = [last - defaultZoom,last];
-            }
+            series = res[0];
+            zoom = res[1];
             return {series:series,zoom:zoom,options:options};
         };
 
-        function addTimeLineEntry(data,time,amount) {
-            do {
-                var hour = nearestHour(time);
-                var nextHour = hour + hourAmount;
-                var thisHour;
-                if (time + amount > nextHour) {
-                    thisHour = nextHour - time;
-                } else {
-                    thisHour = amount;
-                }
-
-                var pastTime = data[data.length-1][0];
-                if (hour === pastTime) {
-                    data[data.length-1][1] += thisHour;
-                } else {
-                    if (hour-pastTime > hourAmount) {
-                        data.push([pastTime + hourAmount,0]);
-                        data.push([hour - hourAmount,0]);
+        function histogram(data, getProps) {
+            var series = [];
+            var zoom = [];
+            if (data && data.length) {
+                var hist = {};
+                var prev = 0;
+                data.map((a) => getProps(a)).sort((a,b) => {
+                    if (a[0] > b[0]) {
+                        return 1;
                     }
-                    pastTime = hour;
-                    data.push([hour,thisHour]);
-                }
+                    return -1;
+                }).forEach((t) => {
+                    var time = t[0];
+                    var name = t[1];
+                    var amount = t[2];
 
-                amount -= thisHour;
-            } while (amount);
+                    if (!hist[name]) {
+                        hist[name] = [[nearestHour(time) - hourAmount,0]];
+                    }
+                    if (amount) {
+                        addTimeLineEntry(hist[name],time,amount);
+                    } else {
+                        addEntry(hist[name],time,1);
+                    }
+                });
+
+                var last = -Infinity;
+                var first = Infinity;
+                series = Object.keys(hist).map((name) => {
+                    var d = hist[name];
+                    //add a 0 after end of data
+                    var lastEntry = d[d.length-1][0];
+                    d.push([lastEntry + hourAmount, 0]);
+
+                    if (lastEntry > last) {
+                        last = lastEntry;
+                    }
+
+                    var firstEntry = d[0][0];
+                    if (firstEntry < first) {
+                        first = firstEntry;
+                    }
+
+                    return {name:name,data:d};
+                });
+                zoom = [first < last - defaultZoom ? last - defaultZoom : first,last];
+            }
+            return [series,zoom];
+        }
+
+        function addEntry(data,hour,amount) {
+            var pastTime = data[data.length-1][0];
+            if (hour === pastTime) {
+                data[data.length-1][1] += amount;
+            } else {
+                if (hour-pastTime > hourAmount) {
+                    data.push([pastTime + hourAmount,0]);
+                    data.push([hour - hourAmount,0]);
+                }
+                data.push([hour,amount]);
+            }
+        }
+
+        function addTimeLineEntry(data,time,amount) {
+            var hour = nearestHour(time);
+            var nextHour = hour + hourAmount;
+
+            while (amount > 0) {
+                if (time + amount > nextHour) {
+                    thisAmount = nextHour - time;
+                } else {
+                    thisAmount = amount;
+                }
+                addEntry(data,hour,thisAmount);
+                amount -= thisAmount;
+                time = nextHour;
+                hour += hourAmount;
+                nextHour += hourAmount;
+            }
         }
 
         function getWebsiteName(name,nameLevel) {
@@ -205,8 +198,8 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     var getData = backgroundPage.getData;
 
     var dataTypes = [
-        {name:"timeLine",maxLevel:3,processData:processTimeLine},
-        {name:"redirect",maxLevel:2,processData:processRedirect}
+        {name:"Wasting Time",key:"wasting",maxLevel:3,processData:processTimeLine},
+        {name:"Site Blocks",key:"block",maxLevel:2,processData:processRedirect}
     ];
     var level;
 
@@ -218,7 +211,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     });
 
     if (dataTypes.length) {
-        var typeOptions;
+        var typeOptions = "";
         for (var i = 0 ; i < dataTypes.length ; i++) {
             var type = dataTypes[i].name;
             typeOptions += "<option value='" + i + "'>" + type + "</option>";
@@ -227,6 +220,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             setChartType(dataTypes[this.value]);
         });
 
+        // TODO lazy loading
         setChartType(dataTypes[0]);
     }
 
@@ -383,11 +377,10 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             getChartData(type);
         });
 
-
         if (type.data) {
             getChartData(type);
         } else {
-            getData(type.name,function(items) {
+            getData(type.key,function(items) {
                 var thisData = [];
                 Object.keys(items).sort().forEach(function(i) {
                     thisData = thisData.concat(items[i]);

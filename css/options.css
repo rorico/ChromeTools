@@ -1,4 +1,4 @@
-body {
+body, .chart-select {
     font-family: 'Times New Roman';
     font-size: 100%;
 }
@@ -18,6 +18,17 @@ div p {
 textarea, select, .val {
 	width: 40%;
 	margin: 2%;
+}
+.title {
+    font-size: 1.5em;
+}
+.chart-select {
+    width: initial;
+    border: none;
+    -webkit-appearance: none;
+    margin: 0;
+    font-size: inherit;
+    font-weight: inherit;
 }
 textarea {
     white-space: nowrap;
