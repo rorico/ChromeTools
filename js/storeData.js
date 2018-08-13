@@ -1,6 +1,7 @@
 var storeData;
 var getData;
 (function() {
+    var throttled = 5;
     var suf = "s";
     var metaSuf = "Meta";
     storeData = function(name,data) {
@@ -30,16 +31,19 @@ var getData;
         });
     };
 
-    getData = function(name,callback) {
+    getData = function(name,callback,unthrotled) {
         var metaName = name + metaSuf;
         get(metaName, function(item) {
             var metaData = item[metaName] || {};
             var min = 0;
             var max = 0;
             //this really generally always happen
-            if (metaData.sync) {
-                min = metaData.sync[0];
-                max = metaData.sync[1];
+            if (metaData.local) {
+                max = metaData.local[1];
+                min = metaData.local[0];
+                if (!unthrottled) {
+                    min = Math.max(min,max - throttled);
+                }
             }
             get(getIndexes(name,min,max), callback);
         });
