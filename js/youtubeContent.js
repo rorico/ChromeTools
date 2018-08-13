@@ -19,13 +19,13 @@ function youtubeNewPage() {
                 if (p.paused) {
                     sendRequest("youtubeEnd");
                 }
-            },100);
-        }
+            }, 100);
+        };
     }
 }
 
 function skipAd() {
-    adSkip = document.getElementsByClassName("videoAdUiSkipButton")[0];
+    var adSkip = document.getElementsByClassName("videoAdUiSkipButton")[0];
     if (adSkip) {
         adSkip.click();
         return true;
@@ -98,7 +98,7 @@ chrome.runtime.onMessage.addListener(function listener(a, b, c) {
 });
 
 //send requests to background
-function sendRequest(action,input) {
+function sendRequest(action, input) {
     chrome.runtime.sendMessage({
         from: "content",
         action: action,

@@ -5,11 +5,11 @@
 var alarms = [];
 var numMaxAlarms = 3;
 
-var typeColors = ["#0000FF","#008000","#FF0000"];   //["blue","green","red"];
+var typeColors = ["#0000FF", "#008000", "#FF0000"];   //["blue", "green", "red"];
 var defaultColor = "#000000";   //black
 var alarmCnt = 0;
 var ringingCnt = 0;
-var alarmTypeCnt = [0,0,0];
+var alarmTypeCnt = [0, 0, 0];
 var alarmTypeMax = -1;
 var audio = new Audio("/alarm.mp3");
 audio.loop = true;
@@ -29,7 +29,7 @@ addMessageListener({
     },
     "snooze": snooze,
     "setAlarm": function(a) {
-        setAlarm(a.input,0);
+        setAlarm(a.input, 0);
     },
     "removeAlarm": function(a) {
         removeAlarm(a.input);
@@ -50,17 +50,17 @@ function setSleepAlarm() {
         // if computer sleeps or something, this runs a lot later, check if it's past end time
         var date = new Date();
         if (inSleepRange(date)) {
-            setAlarm(5,1);
+            setAlarm(5, 1);
         }
         setSleepAlarm();
-    },date - new Date());
+    }, date - new Date());
     function inSleepRange(date) {
         return date.getHours()>=sleepAlarmStart || date.getHours()<=sleepAlarmEnd;
     }
 }
 
 // delay in minutes
-function setAlarm(delay,type) {
+function setAlarm(delay, type) {
     for (var i = 0 ; i < numMaxAlarms ; i++) {
         var alarm = alarms[i];
         if (!alarm) {
@@ -71,7 +71,7 @@ function setAlarm(delay,type) {
                 alarmTime: alarmTime,
                 type: type
             };
-            setRing(alarmObj,i,delay);
+            setRing(alarmObj, i, delay);
 
             alarmCnt++;
             alarmTypeCnt[type]++;
@@ -82,19 +82,19 @@ function setAlarm(delay,type) {
                 alarmTypeMax = type;
             }
             alarms[i] = alarmObj;
-            sendRequest("setAlarm",[i,+alarmTime,type]);
+            sendRequest("setAlarm", [i, +alarmTime, type]);
             return;
         }
     }
 }
 
-function setRing(alarmObj,alarmNumber,delay) {
+function setRing(alarmObj, alarmNumber, delay) {
     var timeout;    //hold this outside for destructor
     var ringer = setTimer(function() {
         ringingCnt++;
         alarmObj.state = 2;
         playAlarmCheck = true;
-        sendRequest("ringing",alarmNumber);
+        sendRequest("ringing", alarmNumber);
         //don't ring if chrome is closed
         //likely want to change the way this is done later
         chrome.windows.getAll(function(windows) {
@@ -109,17 +109,17 @@ function setRing(alarmObj,alarmNumber,delay) {
                     amount += (date.getMinutes() % 30) / 5;
 
                     timeout = setTimeout(function() {
-                        removeAlarm(alarmNumber,alarmObj.type);
-                        setAlarm(5,1);
-                    },amount * 1000);
+                        removeAlarm(alarmNumber, alarmObj.type);
+                        setAlarm(5, 1);
+                    }, amount * 1000);
                 } else if (alarmObj.type === 2) {
                     timeout = setTimeout(function() {
-                        removeAlarm(alarmNumber,alarmObj.type);
-                    },audio.duration * 1000);
+                        removeAlarm(alarmNumber, alarmObj.type);
+                    }, audio.duration * 1000);
                 }
             }
         });
-    },delay * 60000);
+    }, delay * 60000);
     alarmObj.destructor = function() {
         clearTimer(ringer);
         clearTimeout(timeout);
@@ -127,7 +127,7 @@ function setRing(alarmObj,alarmNumber,delay) {
 }
 
 //returns true if alarm is removed
-function removeAlarm(alarmNumber,type) {
+function removeAlarm(alarmNumber, type) {
     //unspecified type is a catchall,
     //type 2 needs specific call
     var alarm = alarms[alarmNumber];
@@ -137,7 +137,7 @@ function removeAlarm(alarmNumber,type) {
         if (!--alarmCnt) {
             alarmTypeMax = -1;
             chrome.browserAction.setBadgeBackgroundColor({color:defaultColor});
-        } else {        
+        } else {
             //update highest alarm color
             for (var i = alarmTypeMax ; i >= 0 ; i--) {
                 if (alarmTypeCnt[i]) {
@@ -159,7 +159,7 @@ function removeAlarm(alarmNumber,type) {
 
         alarm.destructor();
         alarms[alarmNumber] = undefined;
-        sendRequest("removeAlarm",[alarmNumber,alarm.type]);
+        sendRequest("removeAlarm", [alarmNumber, alarm.type]);
         return true;
     }
     return false;
@@ -171,7 +171,7 @@ function stopAllAlarms(type) {
     if (playAlarmCheck) {
         for (var i = 0 ; i < alarms.length ; i++) {
             if (alarms[i] && alarms[i].state === 2) {
-                ret |= removeAlarm(i,type);
+                ret |= removeAlarm(i, type);
             }
         }
     }
@@ -181,6 +181,6 @@ function stopAllAlarms(type) {
 function snooze() {
     //if any alarms are stopped, set another in 5 minutes;
     if (stopAllAlarms()) {
-        setAlarm(5,0);
+        setAlarm(5, 0);
     }
 }

@@ -15,7 +15,7 @@ var addNumberListener;
         phrases = [];
         container.prepend("<div id='chromeTools_keyPress'></div>");
 
-        container.attr("tabindex",1).keydown(function(e) {
+        container.attr("tabindex", 1).keydown(function(e) {
             e.stopPropagation();
             // ignore if ctrl or alt are being pressed (for outside shortcuts)
             if (e.ctrlKey || e.altKey) {
@@ -24,7 +24,7 @@ var addNumberListener;
             if (currentPhrase) {
                 //get ascii value of next part
                 if (e.keyCode === currentPhrase[0].charCodeAt(phraseIndex)) {
-                    showHotkey(phraseIndex,true);
+                    showHotkey(phraseIndex, true);
                     if (++phraseIndex === currentPhrase[0].length) {
                         $("#phrase").addClass("done");
                         var fnc = currentPhrase[1];
@@ -44,7 +44,7 @@ var addNumberListener;
                         //esc key or enter key
                         disappearHotkey();
                     } else {
-                        showHotkey(phraseIndex,false);
+                        showHotkey(phraseIndex, false);
                         if (!allowMistakes) {
                             clearHotkey();
                         }
@@ -58,7 +58,7 @@ var addNumberListener;
                             phrases[i][1]();
                         } else {
                             currentPhrase = phrases[i];
-                            startShowHotkey(phrases[i][0],true);
+                            startShowHotkey(phrases[i][0], true);
                             phraseIndex = 1;
                         }
                         found = true;
@@ -68,8 +68,8 @@ var addNumberListener;
                 if (!found) {
                     var num;
                     //check if is number key
-                    if ((num = e.keyCode - 48,e.keyCode >= 48 && e.keyCode <= 57) ||
-                        (num = e.keyCode - 96,e.keyCode >= 96 && e.keyCode <= 105)) {
+                    if ((num = e.keyCode - 48, e.keyCode >= 48 && e.keyCode <= 57) ||
+                        (num = e.keyCode - 96, e.keyCode >= 96 && e.keyCode <= 105)) {
                         for (var i = 0 ; i < numberListeners.length ; i++) {
                             if (!numberListeners[i][2]) {
                                 numberListeners[i][0](num);
@@ -98,23 +98,23 @@ var addNumberListener;
 
     //order matters in terms of what gets checked first
     //keep letters capitalized
-    addPhrase = function(phrase,funct,hard) {
-        phrases.push([phrase,funct,hard]);
+    addPhrase = function(phrase, funct, hard) {
+        phrases.push([phrase, funct, hard]);
     };
 
     addPhrases = function(array) {
         phrases = phrases.concat(array);
     };
 
-    addNumberListener = function(funct,combo) {
+    addNumberListener = function(funct, combo) {
         if (combo) {
-            numberListeners.push([funct,combo,1]);
+            numberListeners.push([funct, combo, 1]);
         } else {
             numberListeners.push([funct]);
         }
     };
 
-    function startShowHotkey(phrase,start) {
+    function startShowHotkey(phrase, start) {
         var front = "<div id='phraseFront'>";
         var back = "<div id='phraseBack'>";
         for (var i = 0 ; i < phrase.length ; i++) {
@@ -133,21 +133,21 @@ var addNumberListener;
         var maxWidth = parent.width() - widthMargin;
         if (maxWidth < holder.width()) {
             fontSize = Math.floor(fontSize / (holder.width() / maxWidth));
-            $(".phrasePart").css("font-size",fontSize);
+            $(".phrasePart").css("font-size", fontSize);
         }
         //center display
         var leftOffset = (parent.innerWidth() - holder.outerWidth())/2;
         var topOffset = (parent.innerHeight() - holder.outerHeight())/2;
         //can use css transforms to center, but that makes it blurry
-        holder.css("left",leftOffset).css("top",topOffset);
-        
+        holder.css("left", leftOffset).css("top", topOffset);
+
         if (start) {
             $("#phrase0").addClass("filled");
         }
         disappearHotkey(1200);
     }
 
-    function showHotkey(index,correct) {
+    function showHotkey(index, correct) {
         if (correct) {
             $("#phrase" + index).addClass("filled").removeClass("failed");
             disappearHotkey(1200);
@@ -164,7 +164,7 @@ var addNumberListener;
         clearTimeout(disappearTimeout);
         if (time > 0) {
             var opacity = 0.8;
-            $("#phrase").css("opacity",opacity);
+            $("#phrase").css("opacity", opacity);
             if (!allowMistakes) {
                 var disapperTime = 500;
                 //start disappearing after 0.5 secs
@@ -173,16 +173,16 @@ var addNumberListener;
                         var delay = (time - disapperTime) / opacity / 100;
                         disappearInterval = setInterval(function() {
                             opacity -= 0.01;
-                            $("#phrase").css("opacity",opacity);
+                            $("#phrase").css("opacity", opacity);
                             if (opacity <= 0) {
                                 clearInterval(disappearInterval);
                                 removeHotkey();
                             }
-                        },delay);
+                        }, delay);
                     } else {
                         removeHotkey();
                     }
-                },disapperTime);
+                }, disapperTime);
             }
         } else {
             removeHotkey();
@@ -202,26 +202,26 @@ var addNumberListener;
 
     function double(funct, length, num, waste) {
         //add another test
-        sendRequest("randomWord",[length - 2, length + 2, num, waste],function(random) {
+        sendRequest("randomWord", [length - 2, length + 2, num, waste], function(random) {
             var rec = () => {
                 if (random.length) {
                     var phrase = random.pop().toUpperCase();
-                    currentPhrase = [phrase,rec];
-                    startShowHotkey(phrase,false);
+                    currentPhrase = [phrase, rec];
+                    startShowHotkey(phrase, false);
                 } else {
                     funct();
                 }
-            }
+            };
             rec();
         });
     }
 
     //send requests to background
-    function sendRequest(action,input,callback) {
+    function sendRequest(action, input, callback) {
         chrome.runtime.sendMessage({
             from: "browserAction",
             action: action,
             input: input
-        },callback);
+        }, callback);
     }
 })();

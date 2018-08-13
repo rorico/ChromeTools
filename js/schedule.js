@@ -15,18 +15,18 @@ var scheduleInit = (function() {
     var weekSchedule;
     var resize;
 
-    function scheduleInit(container,background) {
+    function scheduleInit(container, background) {
         weekSchedule = background.weekSchedule;
         startTime = background.settings.startHour * 60;
         endTime = background.settings.endHour * 60;
         dayLength = background.settings.endHour - background.settings.startHour;
 
 
-        var header = "<div id='header'>" + 
-                        "<input type='button' value='Prev' id='prev'>\n" + 
-                        "<input type='text' id='datepicker'>\n" + 
-                        "<input type='button' value='Next' id='next'>\n" + 
-                        "<input type='button' value='Show Week' id='showWeek'>" + 
+        var header = "<div id='header'>" +
+                        "<input type='button' value='Prev' id='prev'>\n" +
+                        "<input type='text' id='datepicker'>\n" +
+                        "<input type='button' value='Next' id='next'>\n" +
+                        "<input type='button' value='Show Week' id='showWeek'>" +
                         "</div>";
 
         var side = "<div class='timeline'>";
@@ -53,7 +53,7 @@ var scheduleInit = (function() {
         var html = "<div id='" + containerID + "'>" + header + holder + "</div>";
         container.html(html);
 
-        container.attr("tabindex",1).focus().keydown(function(e) {
+        container.attr("tabindex", 1).focus().keydown(function(e) {
             e.stopPropagation();
             switch (e.keyCode) {
                 case 78:        //n
@@ -94,7 +94,7 @@ var scheduleInit = (function() {
                 $(".placeholder").outerWidth(width);
                 $("#now").outerWidth(width);
             }
-        }
+        };
 
         changeDate(now);
         return {
@@ -121,21 +121,21 @@ var scheduleInit = (function() {
         var offset = 0;
         return showSchedule;
         function showSchedule(dates) {
-            weekSchedule(dates,function(info) {
+            weekSchedule(dates, function(info) {
                 var all = $("<div></div>");
                 now = new Date();
                 for (var j = 0 ; j < dates.length ; j++) {
                     var today = info[j];    //probably not the best variable name
                     var holder = $("<div class='day'></div>");
                     offset = 0;
-                    if (sameDay(dates[j],now)) {
-                        showNow(holder,weekMode);
+                    if (sameDay(dates[j], now)) {
+                        showNow(holder, weekMode);
                     }
                     if (!today.length) {
-                        addTimeSlot(holder,"placeholder placeborder",endTime - startTime,["No Classes Today"]);
-                        addTimeSlot(holder,"placeholder placeborder",1);
+                        addTimeSlot(holder, "placeholder placeborder", endTime - startTime, ["No Classes Today"]);
+                        addTimeSlot(holder, "placeholder placeborder", 1);
                     } else {
-                        addPlaceholder(holder,startTime,today[0][1][1]);
+                        addPlaceholder(holder, startTime, today[0][1][1]);
                         // group together classes when occupying same timeslot
                         // not the most optimal with 3 overlapping, but that doesn't really happen
                         var groups = [[today[0]]];
@@ -145,14 +145,14 @@ var scheduleInit = (function() {
                             if (cls[1][1] < end) {
                                 groups[groups.length - 1].push(cls);
                             } else {
-                                groups.push([cls])
+                                groups.push([cls]);
                             }
                             end = cls[1][2];
                         }
                         for (var k = 0 ; k < groups.length ; k++) {
                             var group = groups[k];
                             var groupStart = group[0][1][1];
-                            var groupEnd = group[group.length - 1][1][2]
+                            var groupEnd = group[group.length - 1][1][2];
                             var groupHolder;
                             var thisHolder = groupHolder = holder;
                             var singleMode = group.length === 1;
@@ -174,13 +174,13 @@ var scheduleInit = (function() {
 
                                 var height = finish - start;
                                 var classTitle = [classCode];
-                                var cssCls = "class " + classType
+                                var cssCls = "class " + classType;
                                 if (singleMode) {
                                     if (!weekMode) {
                                         classTitle.push(className);
                                     }
                                     classTitle.push(classType);
-                                    cssCls += " placeholder"
+                                    cssCls += " placeholder";
                                 } else {
                                     // classType shows when singleMode or weekmode, not both
                                     if (!weekMode) {
@@ -191,16 +191,16 @@ var scheduleInit = (function() {
                                 }
 
                                 var classInfo = [classTitle.join(" - "), location];
-                                addPlaceholder(thisHolder,groupStart,start);
-                                addTimeSlot(thisHolder,cssCls,height,classInfo,group.length);
-                                addPlaceholder(thisHolder,finish,groupEnd);
+                                addPlaceholder(thisHolder, groupStart, start);
+                                addTimeSlot(thisHolder, cssCls, height, classInfo, group.length);
+                                addPlaceholder(thisHolder, finish, groupEnd);
                             }
-                            var end = k === groups.length - 1 
+                            var end = k === groups.length - 1
                                 ? endTime
                                 : groups[k+1][0][1][1];
-                            addPlaceholder(thisHolder,groupEnd,end);
+                            addPlaceholder(thisHolder, groupEnd, end);
                         }
-                        addTimeSlot(holder,"placeholder placeborder",0);
+                        addTimeSlot(holder, "placeholder placeborder", 0);
                     }
                     all.append(holder).append("<div id='side' style='height:" + (dayLength * 50) + "px;'></div>");
                 }
@@ -209,7 +209,7 @@ var scheduleInit = (function() {
             });
         }
 
-        function addPlaceholder(container,start,end) {
+        function addPlaceholder(container, start, end) {
             while (start < end) {
                 var nextHour = Math.floor((start + 60)/60) * 60;
                 var next = nextHour < end ? nextHour : end;
@@ -218,12 +218,12 @@ var scheduleInit = (function() {
                 if (start % 60 === 0) {
                     cls += " placeborder";
                 }
-                addTimeSlot(container,cls,length);
+                addTimeSlot(container, cls, length);
                 start += length;
             }
         }
 
-        function addTimeSlot(container,classType,time,content,share) {
+        function addTimeSlot(container, classType, time, content, share) {
             //do no need to account for border as using box-sizing:border-box
             var height = time/(60/pxPerHr);
             var thisHeight = height + offset;
@@ -234,31 +234,31 @@ var scheduleInit = (function() {
             if (content && content.length) {
                 thisContent = "<p style='top:" + (thisHeight - 15.2 * content.length)/2 + "px'>" + content.join("<br />") + "</p>";
             }
-            var style = "height:" + thisHeight + "px;" + (share > 1 ? "width:" + (100/share) + "%;" : "")
+            var style = "height:" + thisHeight + "px;" + (share > 1 ? "width:" + (100/share) + "%;" : "");
             container.append("<div class='" + classType + "' style='" + style + "'>" + thisContent + "</div>");
         }
 
-        function sameDay(day1,day2) {
+        function sameDay(day1, day2) {
             var date1 = new Date(day1);
             var date2 = new Date(day2);
             return date1.getDate()==date2.getDate()&&date1.getMonth()==date2.getMonth()&&date1.getYear()==date2.getYear();
         }
     })();
 
-    function showNow(container,weekMode) {
+    function showNow(container, weekMode) {
         clearTimeout(nowTimer);
         var holder = $("<div id='nowHolder'></div>");
         var ele = $("<div id='now'></div>");
         holder.html(ele);
         container.prepend(holder);
         nowTimeOffset = 50 * !weekMode;
-        holder.css("left",-nowTimeOffset);
+        holder.css("left", -nowTimeOffset);
         moveNow();
 
         function moveNow() {
             now = new Date();
             if (now.getHours() < startTime/60 || now.getHours() >= endTime/60) {
-                holder.css("display","none");
+                holder.css("display", "none");
             } else {
                 var text = (now.getHours())+":"+("0"+now.getMinutes()).slice(-2)+"AM";
                 if (now.getHours()>=13) {
@@ -268,11 +268,11 @@ var scheduleInit = (function() {
                 }
                 var position = Math.floor((now.getHours() - (startTime)/60) * 50 + now.getMinutes()/1.2);
                 ele.text(text);
-                holder.css("display","block").css("top",position);
+                holder.css("display", "block").css("top", position);
                 var delay = 60000 - now.getSeconds()*1000 - now.getMilliseconds();
                 nowTimer = setTimeout(function() {
                     moveNow();
-                },delay);
+                }, delay);
             }
         }
     }
@@ -298,7 +298,7 @@ var scheduleInit = (function() {
             date.setDate(date.getDate() + 1);
             changeDate(date);
         }
-        $("#datepicker").datepicker("setDate",date);
+        $("#datepicker").datepicker("setDate", date);
     }
 
     function prev() {
@@ -310,12 +310,12 @@ var scheduleInit = (function() {
             date.setDate(date.getDate() - 1);
             changeDate(date);
         }
-        $("#datepicker").datepicker("setDate",date);
+        $("#datepicker").datepicker("setDate", date);
     }
 
     function setToday() {
         now = new Date();
-        $("#datepicker").datepicker("setDate",now);
+        $("#datepicker").datepicker("setDate", now);
         if (weekMode) {
             showWeek(now);
         } else {

@@ -8,10 +8,10 @@ var youtubeVideoNames = [];
         "youtube": function(a) {
             youtube(a.input);
         },
-        "youtubeEnd": function(a,b) {
+        "youtubeEnd": function(a, b) {
             youtubeEnd(b.tab);
         },
-        "skipAd": function(a,b) {
+        "skipAd": function(a, b) {
             skipAd(b.tab);
         }
     });
@@ -20,7 +20,7 @@ var youtubeVideoNames = [];
     //mostly for development, any tab opened after extension loaded should have it already
     youtubeTabs(function(tabs) {
         for (var i = 0 ; i < tabs.length ; i++) {
-            chrome.tabs.executeScript(tabs[i].id,{file:scriptUrl});
+            chrome.tabs.executeScript(tabs[i].id, {file:scriptUrl});
         }
     });
 
@@ -32,13 +32,13 @@ var youtubeVideoNames = [];
         if (!isBlocked()) {
             query.active = false;
         }
-        chrome.tabs.query(query,callback);
+        chrome.tabs.query(query, callback);
     }
 
     function youtube(index) {
         if (typeof index === "number") {
-            play(youtubeVideoIds.splice(index,1)[0]);
-            youtubeVideoNames.splice(index,1);
+            play(youtubeVideoIds.splice(index, 1)[0]);
+            youtubeVideoNames.splice(index, 1);
         } else {
             youtubeTabs(function(tabs) {
                 //if tabs is empty, nothing to play anyways
@@ -48,22 +48,22 @@ var youtubeVideoNames = [];
                 var cnt = 0;
                 var num = tabs.length;
                 for (var i = 0 ; i < num ; i++) {
-                    getState(tabs[i].id,i);
+                    getState(tabs[i].id, i);
                 }
 
-                function getState(id,i,repeat) {
+                function getState(id, i, repeat) {
                     var data = {action:"getState"};
-                    chrome.tabs.sendMessage(id,data,function(state) {
+                    chrome.tabs.sendMessage(id, data, function(state) {
                         //script missing from the tab, inject
                         if (state === undefined && !repeat) {
-                            chrome.tabs.executeScript(id,{file:scriptUrl},function() {
+                            chrome.tabs.executeScript(id, {file:scriptUrl}, function() {
                                 if (chrome.runtime.lastError) {
                                     //something went wrong here, don't try again, just move on
                                     log(chrome.runtime.lastError);
                                     action();
                                 } else {
                                     //make sure not to get in infinite loop
-                                    getState(id,i,true);
+                                    getState(id, i, true);
                                 }
                             });
                         } else {
@@ -87,7 +87,7 @@ var youtubeVideoNames = [];
                                     var tab = tabs[i];
                                     var data = {action:index === "J" ? "back" : "forward"};
 
-                                    chrome.tabs.sendMessage(tab.id,data);
+                                    chrome.tabs.sendMessage(tab.id, data);
                                 }
                             }
                         }
@@ -100,8 +100,8 @@ var youtubeVideoNames = [];
                                     var tab = tabs[i];
                                     var data = {action:"pause"};
 
-                                    chrome.tabs.sendMessage(tab.id,data);
-                                    addTab(tab.id,tab.title);
+                                    chrome.tabs.sendMessage(tab.id, data);
+                                    addTab(tab.id, tab.title);
                                 }
                             }
                             sendRequest("youtube");
@@ -121,14 +121,14 @@ var youtubeVideoNames = [];
         youtubeTabs(function(tabs) {
             var data = {action:"skipAd"};
             for (var i = 0 ; i < tabs.length ; i++) {
-                chrome.tabs.sendMessage(tabs[i].id,data);
+                chrome.tabs.sendMessage(tabs[i].id, data);
             }
         });
     }
 
-    function addTab(id,title) {
+    function addTab(id, title) {
         //remove ending - YouTube
-        title = title.substr(0,title.lastIndexOf(" - YouTube"));
+        title = title.substr(0, title.lastIndexOf(" - YouTube"));
         youtubeVideoIds.push(id);
         youtubeVideoNames.push(title);
     }
@@ -156,7 +156,7 @@ var youtubeVideoNames = [];
 
     function play(tabId) {
         var data = {action:"play"};
-        chrome.tabs.sendMessage(tabId,data);
+        chrome.tabs.sendMessage(tabId, data);
     }
 
     function youtubeEnd(tab) {
@@ -164,10 +164,10 @@ var youtubeVideoNames = [];
         //property that gets overwritten when array is restarted
         if (youtubeVideoIds.ended || !youtubeVideoIds.length) {
             emptyList();
-            addTab(tab.id,tab.title);
+            addTab(tab.id, tab.title);
             sendRequest("youtube");
             youtubeVideoIds.ended = true;
-            chrome.tabs.sendMessage(tab.id,{action:"listen"},function() {
+            chrome.tabs.sendMessage(tab.id, {action:"listen"}, function() {
                 if (youtubeVideoIds.ended && youtubeVideoIds[0] === tab.id) {
                     emptyList();
                 }

@@ -15,7 +15,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     for (var i = 0 ; i < alarms.length ; i++) {
         var alarm = alarms[i];
         if (alarm && alarm.state) {
-            showAlarm(alarm.alarmTime,i,alarm.type);
+            showAlarm(alarm.alarmTime, i, alarm.type);
             if (alarm.state == 2) {
                 showRinging(i);
             }
@@ -25,16 +25,16 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     keyPressInit($("body"));
     //this might take some time, so let other things finish first
     setTimeout(function() {
-        timeLineInit($("#timeLineH"),background);
-    },0)
+        timeLineInit($("#timeLineH"), background);
+    }, 0);
 
     //last one isn't really alarms, but grouping here
-    var alarmPhrases = [["S",setAlarmKey],["A",stopAllAlarms],["X",snooze]];
+    var alarmPhrases = [["S", setAlarmKey], ["A", stopAllAlarms], ["X", snooze]];
     addPhrases(alarmPhrases);
 
     addNumberListener(function(num) {
         removeAlarm(num - 1);  //0 index
-    },"D");
+    }, "D");
     addNumberListener(changeTimer);
 
     alertLogs();
@@ -57,15 +57,16 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
         if (diff < 0) {
             window.close();
         } else {
-            var cT = setTimeout(function() {
+            clearTimeout(cT);
+            cT = setTimeout(function() {
                 close();
-            },diff);
+            }, diff);
         }
     }
     close();
 
     //list entries in format [ele, enable] or ele, depending on enable
-    function topButton(list,symbol,side,enable,clickCallback) {
+    function topButton(list, symbol, side, enable, clickCallback) {
         var obj = {
             list:list,
             cnt:0,
@@ -112,7 +113,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
                     info = obj.list[i];
                 }
                 var ele = $("<div class='log block'>" + info + "</div>");
-                setClick(ele,i);
+                setClick(ele, i);
                 allEle.append(ele);
                 obj.cnt++;
             }
@@ -127,7 +128,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
             button.width(button.height());
         }
 
-        function setClick(ele,i) {
+        function setClick(ele, i) {
             ele.click(function(e){
                 e.stopPropagation();
                 clickCallback(i);
@@ -149,9 +150,9 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
         var logs = background.allLogs;
         var numUnread = background.numUnread;
         if (numUnread) {
-            topButton(logs,"!","left",true,function(index) {
-                sendRequest("removeLog",index);
-            })
+            topButton(logs, "!", "left", true, function(index) {
+                sendRequest("removeLog", index);
+            });
         }
     }
 
@@ -170,8 +171,8 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
         } else {
             if (youtube.length) {
                 //play symbol, may want to change
-                youtubeButton = topButton(youtube,"&#9658;","right",false,function(index) {
-                    sendRequest("youtube",index);
+                youtubeButton = topButton(youtube, "&#9658;", "right", false, function(index) {
+                    sendRequest("youtube", index);
                 });
             }
         }
@@ -207,12 +208,12 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     }
 
     function setAlarm(delay) {
-        sendRequest("setAlarm",delay);
+        sendRequest("setAlarm", delay);
     }
 
     function removeAlarm(alarmNumber) {
         if (alarmNumber >= 0 && alarmNumber < 5) {
-            sendRequest("removeAlarm",alarmNumber);
+            sendRequest("removeAlarm", alarmNumber);
         }
     }
 
@@ -225,7 +226,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     }
 
     //send requests to background
-    function sendRequest(action,input) {
+    function sendRequest(action, input) {
         chrome.runtime.sendMessage({
             from: "browserAction",
             action: action,
@@ -239,11 +240,11 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
             switch(a.action) {
                 case "setAlarm":
                     var input = a.input;
-                    showAlarm(new Date(input[1]),input[0],input[2]);
+                    showAlarm(new Date(input[1]), input[0], input[2]);
                     break;
                 case "removeAlarm":
                     var input = a.input;
-                    showRemove(input[0],input[1]);
+                    showRemove(input[0], input[1]);
                     break;
                 case "ringing":
                     showRinging(a.input);
@@ -255,25 +256,25 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
         }
     });
 
-    function showAlarm(date,alarmNumber,type) {
+    function showAlarm(date, alarmNumber, type) {
         var time = date.toLocaleTimeString();
         $("#alarmText" + alarmNumber).html("Alarm at " + time);
-        $("#alarm" + alarmNumber).removeClass("notSet").css({"color":typeColors[type],"border-color":typeColors[type]}).bind("click",function() {
+        $("#alarm" + alarmNumber).removeClass("notSet").css({"color":typeColors[type], "border-color":typeColors[type]}).bind("click", function() {
             removeAlarm(alarmNumber);
         });
     }
 
-    function showRemove(alarmNumber,type) {
-        $("#alarmText" + alarmNumber).html("Not Set").css("visibility","visible");
+    function showRemove(alarmNumber, type) {
+        $("#alarmText" + alarmNumber).html("Not Set").css("visibility", "visible");
         clearInterval(ringingAlarms[alarmNumber]);
-        $("#alarm" + alarmNumber).addClass("notSet").unbind("click").css({"color":defaultColor,"border-color":defaultColor});
+        $("#alarm" + alarmNumber).addClass("notSet").unbind("click").css({"color":defaultColor, "border-color":defaultColor});
     }
 
     function showRinging(alarmNumber) {
         var visibility = "hidden";
         ringingAlarms[alarmNumber] = setInterval(function() {
             visibility = (visibility === "hidden" ? "visible" : "hidden");
-            $("#alarmText" + alarmNumber).css("visibility",visibility);
-        },300);
+            $("#alarmText" + alarmNumber).css("visibility", visibility);
+        }, 300);
     }
 });

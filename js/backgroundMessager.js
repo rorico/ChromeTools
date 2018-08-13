@@ -15,13 +15,13 @@ var addMessageListener;
         if (a.from !== "background") {
             var funct = messageListeners[a.action];
             if (typeof funct === "function") {
-                funct(a,b,c);
+                funct(a, b, c);
             }
         }
     });
 })();
 
-function sendFormat(action,input) {
+function sendFormat(action, input) {
     return {
         from: "background",
         action: action,
@@ -30,6 +30,6 @@ function sendFormat(action,input) {
 }
 
 //for displaying in an open browser action
-function sendRequest(action,input) {
-    chrome.runtime.sendMessage(sendFormat(action,input));
+function sendRequest(action, input) {
+    chrome.runtime.sendMessage(sendFormat(action, input));
 }

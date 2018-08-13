@@ -4,7 +4,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     (function() {
         var hourAmount = 3600000; //num of millisec
         var defaultZoom = 604800000; //1 week
-        processRedirect = function(typeData,level) {
+        processRedirect = function(typeData, level) {
             var options = {
                 title: {
                     text: null
@@ -19,16 +19,16 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var res = histogram(typeData, (t) => {
                 return [
                     nearestHour(t[0]),
-                    getWebsiteName(t[1],level)
+                    getWebsiteName(t[1], level)
                 ];
             });
 
-            series = res[0];
-            zoom = res[1];
-            return {series:series,zoom:zoom,options:options};
+            var series = res[0];
+            var zoom = res[1];
+            return {series:series, zoom:zoom, options:options};
         };
-        
-        processTimeLine = function(typeData,level) {
+
+        processTimeLine = function(typeData, level) {
             var options = {
                 title: {
                     text: null
@@ -45,7 +45,6 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                 },
                 tooltip: {
                     pointFormatter: function() {
-                        console.log(this)
                         //copied from default with value format changed
                         return "<span style='color:" + this.color + "'>\u25CF</span> " + this.series.name + ": <b>" + MinutesSecondsFormat(this.y) + "</b><br/>";
                     }
@@ -54,14 +53,14 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var res = histogram(typeData, (t) => {
                 return [
                     t[0],
-                    level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3],level),
+                    level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3], level),
                     t[1]
                 ];
             });
 
-            series = res[0];
-            zoom = res[1];
-            return {series:series,zoom:zoom,options:options};
+            var series = res[0];
+            var zoom = res[1];
+            return {series:series, zoom:zoom, options:options};
         };
 
         function histogram(data, getProps) {
@@ -69,8 +68,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var zoom = [];
             if (data && data.length) {
                 var hist = {};
-                var prev = 0;
-                data.map((a) => getProps(a)).sort((a,b) => {
+                data.map((a) => getProps(a)).sort((a, b) => {
                     if (a[0] > b[0]) {
                         return 1;
                     }
@@ -81,12 +79,12 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     var amount = t[2];
 
                     if (!hist[name]) {
-                        hist[name] = [[nearestHour(time) - hourAmount,0]];
+                        hist[name] = [[nearestHour(time) - hourAmount, 0]];
                     }
                     if (amount) {
-                        addTimeLineEntry(hist[name],time,amount);
+                        addTimeLineEntry(hist[name], time, amount);
                     } else {
-                        addEntry(hist[name],time,1);
+                        addEntry(hist[name], time, 1);
                     }
                 });
 
@@ -107,37 +105,38 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                         first = firstEntry;
                     }
 
-                    return {name:name,data:d};
+                    return {name:name, data:d};
                 });
-                zoom = [first < last - defaultZoom ? last - defaultZoom : first,last];
+                zoom = [first < last - defaultZoom ? last - defaultZoom : first, last];
             }
-            return [series,zoom];
+            return [series, zoom];
         }
 
-        function addEntry(data,hour,amount) {
+        function addEntry(data, hour, amount) {
             var pastTime = data[data.length-1][0];
             if (hour === pastTime) {
                 data[data.length-1][1] += amount;
             } else {
                 if (hour-pastTime > hourAmount) {
-                    data.push([pastTime + hourAmount,0]);
-                    data.push([hour - hourAmount,0]);
+                    data.push([pastTime + hourAmount, 0]);
+                    data.push([hour - hourAmount, 0]);
                 }
-                data.push([hour,amount]);
+                data.push([hour, amount]);
             }
         }
 
-        function addTimeLineEntry(data,time,amount) {
+        function addTimeLineEntry(data, time, amount) {
             var hour = nearestHour(time);
             var nextHour = hour + hourAmount;
 
             while (amount > 0) {
+                var thisAmount;
                 if (time + amount > nextHour) {
                     thisAmount = nextHour - time;
                 } else {
                     thisAmount = amount;
                 }
-                addEntry(data,hour,thisAmount);
+                addEntry(data, hour, thisAmount);
                 amount -= thisAmount;
                 time = nextHour;
                 hour += hourAmount;
@@ -145,7 +144,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             }
         }
 
-        function getWebsiteName(name,nameLevel) {
+        function getWebsiteName(name, nameLevel) {
             name = (typeof name === "string" ? name : "unnamed");
             var ret = name;
             switch(nameLevel) {
@@ -159,7 +158,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     if (index !== -1) {
                         var rest = name.substring(index + lookFor.length);
                         var slashIndex = rest.indexOf("/");
-                        var subreddit = rest.substring(0,(slashIndex === -1 ? rest.length : slashIndex));
+                        var subreddit = rest.substring(0, (slashIndex === -1 ? rest.length : slashIndex));
                         ret = base + " -> " + subreddit;
                     } else {
                         ret = base;
@@ -198,8 +197,8 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     var getData = backgroundPage.getData;
 
     var dataTypes = [
-        {name:"Wasting Time",key:"wasting",maxLevel:3,processData:processTimeLine},
-        {name:"Site Blocks",key:"block",maxLevel:2,processData:processRedirect}
+        {name:"Wasting Time", key:"wasting", maxLevel:3, processData:processTimeLine},
+        {name:"Site Blocks", key:"block", maxLevel:2, processData:processRedirect}
     ];
     var level;
 
@@ -233,8 +232,8 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         chrome.storage.sync.set({"scheduleInfo": data});
         backgroundPage.setScheduleInfo();
     }
-    liveChange("class",scheduleInfo,parseSchedule,submitSchedule);
-    liveChange("iframe",iframeInfo,parseIframe,submitIframe);
+    liveChange("class", scheduleInfo, parseSchedule, submitSchedule);
+    liveChange("iframe", iframeInfo, parseIframe, submitIframe);
 
     // other settings
     var defaults = backgroundPage.defaults;
@@ -242,7 +241,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     var userSettings = backgroundPage.userSettings;
 
 
-    $settings = $("#settings");
+    var $settings = $("#settings");
     for (var u in userSettings) {
         $settings.append(settingRow(u, userSettings[u]));
     }
@@ -264,12 +263,12 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         ele.append(input);
         var notEmpty = () => {
             var del = $("<input type='button' class='del' value='&#10006;'>");
-            ele.prepend(del.clone().addClass("placeholder"))
+            ele.prepend(del.clone().addClass("placeholder"));
             del.click(function() {
                 ele.remove();
             });
             ele.append(del);
-        }
+        };
         var empty = !setting;
         if (!empty) {
             notEmpty();
@@ -320,7 +319,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         backgroundPage.updateSettings(set);
     });
 
-    function liveChange(baseId,data,parser,submitCallback) {
+    function liveChange(baseId, data, parser, submitCallback) {
         var before = $("#" + baseId + "-before");
         var after = $("#" + baseId + "-after");
         var submit = $("#" + baseId + "-submit");
@@ -353,7 +352,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                 var item = {
                     url: cols[0],
                     reload: cols[1] === "reload"
-                }
+                };
                 ret.push(item);
             }
         }
@@ -380,23 +379,23 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         if (type.data) {
             getChartData(type);
         } else {
-            getData(type.key,function(items) {
+            getData(type.key, function(items) {
                 var thisData = [];
                 Object.keys(items).sort().forEach(function(i) {
                     thisData = thisData.concat(items[i]);
                 });
                 type.data = thisData;
                 getChartData(type);
-            });   
+            });
         }
     }
 
     function getChartData(type) {
-        var res = type.processData(type.data,level);
-        setChartData(res.series,res.zoom,res.options);
+        var res = type.processData(type.data, level);
+        setChartData(res.series, res.zoom, res.options);
     }
 
-    function setChartData(series,zoom,dataOptions) {
+    function setChartData(series, zoom, dataOptions) {
         if (series) {
             var options = {
                 chart: {
@@ -445,7 +444,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             }
             var chart = new Highcharts.Chart(options);
             if (zoom) {
-                chart.xAxis[0].setExtremes(zoom[0],zoom[1]);
+                chart.xAxis[0].setExtremes(zoom[0], zoom[1]);
                 chart.showResetZoom();
             }
         }

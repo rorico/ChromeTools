@@ -18,12 +18,12 @@ function setIframeInfo() {
                 for (var i = headers.length - 1 ; i >= 0 ; i--) {
                     var header = headers[i].name.toLowerCase();
                     if (header === "x-frame-options" || header === "frame-options") {
-                        headers.splice(i,1);
+                        headers.splice(i, 1);
                     }
                 }
                 return {
                     responseHeaders: headers
-                }
+                };
             }, {
                 urls: urls,
                 types: ["sub_frame"]

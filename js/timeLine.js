@@ -24,26 +24,25 @@ var timeLineInit;
     var find;
 
     //for setup key presses
-    var keyPhrases = [["RESET",resetTimeLine,20,true],
-                    ["VIP",VIP,18,true],
-                    ["FINISH",finish,12,true],
-                    ["CHANGE",change,15],
-                    ["TEMP",tempVIP,0,true],
-                    ["NO",zero],
-                    ["MO",antizero,8],
-                    ["P",skipAd],
-                    ["K",youtubeK],
-                    ["J",youtubeJ],
-                    ["L",youtubeL]];
+    var keyPhrases = [["RESET", resetTimeLine, 20, true],
+                    ["VIP", VIP, 18, true],
+                    ["FINISH", finish, 12, true],
+                    ["CHANGE", change, 15],
+                    ["TEMP", tempVIP, 0, true],
+                    ["NO", zero],
+                    ["MO", antizero, 8],
+                    ["P", skipAd],
+                    ["K", youtubeK],
+                    ["J", youtubeJ],
+                    ["L", youtubeL]];
 
     //this is the global scope
     timeLineInit = init;
 
-    function init(container,background) {
-        var start = new Date();
+    function init(container, background) {
         find = function(sel) {
             return container.find(sel);
-        }
+        };
 
         parentWidth = calcWidth(container.width());
 
@@ -74,7 +73,7 @@ var timeLineInit;
         addPhrases(keyPhrases);
 
         //need this when modal is moved
-        timeLineResize = function() {
+        function timeLineResize() {
             var newWidth = calcWidth(container.width());
             if (newWidth !== parentWidth) {
                 parentWidth = newWidth;
@@ -82,8 +81,7 @@ var timeLineInit;
                 find("#timeLine > div").empty();
                 timeLineCreate();
             }
-        };
-
+        }
 
         //get from background to display
         chrome.runtime.onMessage.addListener(function(a, b, c) {
@@ -94,7 +92,7 @@ var timeLineInit;
                         break;
                     case "change":
                         var input = a.input;
-                        changeTimeLine(input[0],input[1]);
+                        changeTimeLine(input[0], input[1]);
                         break;
                     case "reset":
                         setTimeLine(a.input);
@@ -146,13 +144,12 @@ var timeLineInit;
         currentTimePiece = -1;
         timeLineOffset = 0;
         timeCurrent = new Date() - startTime;
-        var $timeLine = find("#timeLines-0");
-        var timelineHtml = ""
+        var timelineHtml = "";
 
-        if (add(-1,startTime,timeCurrent,wastingTime)) {
+        if (add(-1, startTime, timeCurrent, wastingTime)) {
             var last;
             for (var i = 0; i < timeLine.length ; i++) {
-                if (!add(i,timeLine[i][0],timeLine[i][1],timeLine[i][2])) {
+                if (!add(i, timeLine[i][0], timeLine[i][1], timeLine[i][2])) {
                     last = timeLine[i][0];
                     break;
                 }
@@ -164,7 +161,7 @@ var timeLineInit;
             }
             if (last > oldest) {
                 //fill in rest
-                add(-2,oldest,last - oldest);
+                add(-2, oldest, last - oldest);
             }
         }
         find("#timeLines-2").append(timelineHtml);
@@ -173,43 +170,43 @@ var timeLineInit;
         updateTimeLine();
 
         //returns true if not done
-        function add(index,start,time,wastingTime) {
+        function add(index, start, time, wastingTime) {
             var ret = true;
             if (start < oldest) {
                 time +=  start - oldest;
                 ret = false;
             }
-            timelineHtml = (addTimeLine(index,time,wastingTime,false,true) || "") + timelineHtml;
+            timelineHtml = (addTimeLine(index, time, wastingTime, false, true) || "") + timelineHtml;
             return ret;
         }
     }
     //returns true if not done
-    function addTimeLine(index,time,wastingTime,first,html) {
+    function addTimeLine(index, time, wastingTime, first, html) {
         var classes = (index === -2 ? "" : "wasting" + wastingTime);
-        var block = getBlock(index,time,classes,getTimeLineId(index));
+        var block = getBlock(index, time, classes, getTimeLineId(index));
 
         if (block) {
             var copy = $(block).removeAttr("id").addClass("placeholder");
             if (index !== -2) {
-                setClick(copy,getIndex(index));
+                setClick(copy, getIndex(index));
                 copy.removeClass(classes);
             }
-            appendBlock(find("#timeLines-0"),copy,first);
+            appendBlock(find("#timeLines-0"), copy, first);
             if (html) {
                 return block;
             } else {
-                appendBlock(find("#timeLines-2"),block,first);
+                appendBlock(find("#timeLines-2"), block, first);
             }
         }
     }
 
-    function addBlock(holder,index,time,classes,id,first) {
-        var block = $(getBlock(index,time,classes,id));
-        appendBlock(holder,block,first);
+    function addBlock(holder, index, time, classes, id, first) {
+        var block = $(getBlock(index, time, classes, id));
+        appendBlock(holder, block, first);
         return block;
     }
 
-    function getBlock(index,time,classes,id) {
+    function getBlock(index, time, classes, id) {
         // add a rounding error of 0.1
         var width = timeToWidth(time) + offset + 0.1;
         offset = width % 1 - 0.1;
@@ -226,7 +223,7 @@ var timeLineInit;
         return "<div style='width:" + width + "px;' class='" + classes + (id ? "' id='" + id : "") + "'></div>";
     }
 
-    function appendBlock(holder,entry,first) {
+    function appendBlock(holder, entry, first) {
         if (first) {
             holder.append(entry);
         } else {
@@ -246,40 +243,40 @@ var timeLineInit;
         return (index === -2 ? "timeLineP" : "timeLine" + getIndex(index));
     }
 
-    function setClick(ele,i) {
+    function setClick(ele, i) {
         ele.click(function() {
             currentTimePiece = i + timeLineOffset;
             displayInfo(currentTimePiece);
         });
         ele.hover(function() {
             displayInfo(i + timeLineOffset);
-        },function() {
+        }, function() {
             displayInfo(currentTimePiece);
         });
     }
 
-    function displayInfo(i,repeat) {
+    function displayInfo(i, repeat) {
         clearTimeout(timeCurrentInterval);
         var info = "";
         if (i === -1) {
             timeCurrent = new Date() - startTime;
             var delay = 1000 - (timeCurrent%1000);
             if (repeat) {
-                find("#timeSpend").html(MinutesSecondsFormat(timeCurrent,true));
+                find("#timeSpend").html(MinutesSecondsFormat(timeCurrent, true));
             } else {
-                info = formatInfo(url,timeCurrent,title);
+                info = formatInfo(url, timeCurrent, title);
                 find("#info").html(info);
             }
             timeCurrentInterval = setTimeout(function() {
-                displayInfo(i,true);
-            },delay);
+                displayInfo(i, true);
+            }, delay);
         } else {
-            info = formatInfo(timeLine[i][3],timeLine[i][1],timeLine[i][4]);
+            info = formatInfo(timeLine[i][3], timeLine[i][1], timeLine[i][4]);
             find("#info").html(info);
         }
     }
 
-    function changeTimeLine(index,prev) {
+    function changeTimeLine(index, prev) {
         find("#" + getTimeLineId(index)).removeClass("wasting" + prev).addClass("wasting0");
     }
 
@@ -292,15 +289,15 @@ var timeLineInit;
             var end = start;
             var first = noBlocks[0];
             if (first[0] < start) {
-                $timeLine.css("left","-" + timeToWidth(start - first[0]) + "px");
+                $timeLine.css("left", "-" + timeToWidth(start - first[0]) + "px");
                 start = first[0];
             } else {
-                $timeLine.css("left",0);
+                $timeLine.css("left", 0);
             }
             for (var i = 0; i < noBlocks.length ; i++) {
                 var block = noBlocks[i];
                 if (start < block[0]) {
-                    addBlock($timeLine,-1,block[0] - start,"placeholder","",true);
+                    addBlock($timeLine, -1, block[0] - start, "placeholder", "", true);
                     start = block[0];
                     end = block[1];
                 } else if (start < block[1]) {
@@ -309,7 +306,7 @@ var timeLineInit;
                     //this means its envelopped in another block
                     continue;
                 }
-                var ele = addBlock($timeLine,-1,end - start,"noBlock","",true);
+                var ele = addBlock($timeLine, -1, end - start, "noBlock", "", true);
                 var color = "blue";
                 var info = block[2];
                 if (info) {
@@ -317,7 +314,7 @@ var timeLineInit;
                     color = "red";
                     var startI = 2;
                     do {
-                        var text = info[2].slice(0,startI).join(" - ");
+                        var text = info[2].slice(0, startI).join(" - ");
                         ele.html(text);
                         startI--;
                         //if text is too large for div
@@ -342,7 +339,7 @@ var timeLineInit;
         title = input.title;
         timeLine.unshift(input.newest);
         timeLineOffset++;
-        addTimeLine(-1,0,wastingTime,true);
+        addTimeLine(-1, 0, wastingTime, true);
         displayInfo(-1);
     }
 
@@ -359,12 +356,12 @@ var timeLineInit;
 
     //not exactly accurate, not too important
     function countDownFunction(time) {
-        find("#timeLeft").html(MinutesSecondsFormat(time,false));
+        find("#timeLeft").html(MinutesSecondsFormat(time, false));
         if (wastingTime && time>0) {
             var delay = (time-1)%1000+1;
             countDownTimer = setTimeout(function() {
                 countDownFunction(time - delay);
-            },delay);
+            }, delay);
         }
     }
 
@@ -385,7 +382,7 @@ var timeLineInit;
                 var timeLine = holder.children();
                 if (holder.hasClass("offset")) {
                     //assume in px
-                    holder.css("left",parseInt(holder.css("left")) - 1);
+                    holder.css("left", parseInt(holder.css("left")) - 1);
                 } else if (timeLine.length) {
                     //get first and last element, and they widths
                     for (var i = 0 ; i < timeLine.length ; i++) {
@@ -421,16 +418,16 @@ var timeLineInit;
                     }
                 }
             }
-        },delay);
+        }, delay);
     }
 
-    function formatInfo(url,time,title) {
-        return "<div class='ellipsis'>" + title + "</div>" + 
-                "<div class='ellipsis'>" + url + "</div>" + 
-                "Time spent: <span id='timeSpend'>" + MinutesSecondsFormat(time,true) + "</span>";
+    function formatInfo(url, time, title) {
+        return "<div class='ellipsis'>" + title + "</div>" +
+                "<div class='ellipsis'>" + url + "</div>" +
+                "Time spent: <span id='timeSpend'>" + MinutesSecondsFormat(time, true) + "</span>";
     }
 
-    function MinutesSecondsFormat(milli,up) {
+    function MinutesSecondsFormat(milli, up) {
         var secs = up ? Math.floor(milli/1000) : Math.ceil(milli/1000);
         return Math.floor(secs/60)  + ":" + ("0" + Math.floor(secs%60)).slice(-2);
     }
@@ -442,13 +439,13 @@ var timeLineInit;
     function VIP() {
         sendRequest("VIP");
     }
-    
+
     function finish() {
         sendRequest("finish");
     }
 
     function change() {
-        sendRequest("change",currentTimePiece);
+        sendRequest("change", currentTimePiece);
     }
 
     function tempVIP() {
@@ -464,13 +461,13 @@ var timeLineInit;
     }
 
     function youtubeJ() {
-        sendRequest("youtube","J");
+        sendRequest("youtube", "J");
     }
     function youtubeK() {
-        sendRequest("youtube","K");
+        sendRequest("youtube", "K");
     }
     function youtubeL() {
-        sendRequest("youtube","L");
+        sendRequest("youtube", "L");
     }
 
     function skipAd() {
@@ -478,7 +475,7 @@ var timeLineInit;
     }
 
     //send requests to background
-    function sendRequest(action,input) {
+    function sendRequest(action, input) {
         chrome.runtime.sendMessage({
             from: "browserAction",
             action: action,

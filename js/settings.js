@@ -25,7 +25,7 @@ var userSettings = {};
             listeners[setting] = [];
         }
         listeners[setting].push(onchange);
-    }
+    };
 
     updateSetting = function(setting, val) {
         if (settings[setting] != val) {
@@ -33,12 +33,12 @@ var userSettings = {};
             settings[setting] = val;
             storeSettings();
         }
-    }
+    };
 
     updateSettings = function(newSettings) {
         for (var set in newSettings) {
             if (newSettings[set] !== settings[set]) {
-                updateListeners(set,newSettings[set]);
+                updateListeners(set, newSettings[set]);
             }
         }
         settings = newSettings;
@@ -50,7 +50,7 @@ var userSettings = {};
                 settings[d] = defaults[d][0];
             }
         }
-    }
+    };
 
     addDefault = function(setting, val, type, display) {
         defaults[setting] = [val, type, display || setting];
@@ -58,7 +58,7 @@ var userSettings = {};
             updateListeners(settings[setting], val);
             settings[setting] = val;
         }
-    }
+    };
 
     function updateListeners(setting, val) {
         if (listeners[setting]) {
@@ -69,7 +69,7 @@ var userSettings = {};
     }
 
     function storeSettings() {
-        var obj = {}
+        var obj = {};
         obj[settingName] = settings;
         chrome.storage.sync.set(obj, () => {
             if (chrome.runtime.lastError) {

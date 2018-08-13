@@ -31,13 +31,13 @@ var isBlocked;
     //sites that will block after time spent
     // TODO: better system for this, more check
     addDefault("blockUrls", [[
-        "*://reddit.com/*","*://*.reddit.com/*",
+        "*://reddit.com/*", "*://*.reddit.com/*",
         "http://threesjs.com/"
     ],
     //sites that will spend time but not actively block
     [
         "*://*.youtube.com/*",
-        "*://imgur.com/*","*://*.imgur.com/*"
+        "*://imgur.com/*", "*://*.imgur.com/*"
     ]], "json");
 
     addDefault("timeLineLength", 1800000, "int"); // 30 mins
@@ -59,7 +59,7 @@ var isBlocked;
     });
 
     timeLeft = settings.startingTimeLeft;
-    
+
     //functions in their own closure
     var blockTab;
     var sendContent;
@@ -86,9 +86,9 @@ var isBlocked;
     getWasteStreak = function() {
         // worse the more wasting, and the more keywords used
         return wasteStreak + (timeLeft < 0 ? Math.floor(-timeLeft / settings.startingTimeLeft) : 0);
-    }
+    };
 
-    function addNoBlock(start,stop,info) {
+    function addNoBlock(start, stop, info) {
         var index = noBlocks.length;
         for (var i = 0; i < noBlocks.length ; i++) {
             var block = noBlocks[i];
@@ -98,11 +98,11 @@ var isBlocked;
             }
         }
         //need timestamp to be jsonifiable (when sent to content scripts)
-        var entry = [+start,+stop,info];
-        noBlocks.splice(index,0,entry);
+        var entry = [+start, +stop, info];
+        noBlocks.splice(index, 0, entry);
 
         //TODO better way to do this, for now redo entire thing
-        sendContent("addNoBlock",noBlocks);
+        sendContent("addNoBlock", noBlocks);
         if (index === 0) {
             noBlockReminder();
         }
@@ -116,7 +116,7 @@ var isBlocked;
             }
         }
         //could go to next day, for now, don't do that
-        return [Infinity,Infinity];
+        return [Infinity, Infinity];
     }
 
     function noBlockReminder() {
@@ -133,12 +133,12 @@ var isBlocked;
                 if (time > 0) {
                     noBlockTimer = setTimer(function() {
                         check();
-                    },time);
+                    }, time);
                 } else {
                     timeLeftOutput();
                     noBlockReminder();
                 }
-            },nextNoBlock - new Date());
+            }, nextNoBlock - new Date());
         } else {
             nextNoBlock = Infinity;
         }
@@ -153,8 +153,8 @@ var isBlocked;
             var thisClass = today[i];
             var end = militaryToUTC(thisClass[1][2]);
             if (position < end) {
-                var start = militaryToUTC(thisClass[1][1])
-                addNoBlock(start,end,thisClass);
+                var start = militaryToUTC(thisClass[1][1]);
+                addNoBlock(start, end, thisClass);
             }
         }
     }
@@ -200,7 +200,7 @@ var isBlocked;
 
     chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {
         // finish keyword updates on page changes, check here
-        // want to keep track even if current 
+        // want to keep track even if current
         if (finishTab && id === VIPtab) {
             // this should be the same as for handleNewTab
             if (changeInfo && changeInfo.status === "loading") {
@@ -233,10 +233,10 @@ var isBlocked;
     chrome.windows.onFocusChanged.addListener(function(id) {
         //due to browserAction triggering this, gonna have to workaround it
         if (id === chrome.windows.WINDOW_ID_NONE) {
-            //handleNewPage("","Outside Chrome");
+            //handleNewPage("", "Outside Chrome");
         } else {
             if (windowId !== id) {
-                chrome.tabs.query({windowId:id,active:true}, function(tabs) {
+                chrome.tabs.query({windowId:id, active:true}, function(tabs) {
                     if (tabs.length) {
                         var activeTab = tabs[0];
                         tabId = activeTab.id;
@@ -258,29 +258,29 @@ var isBlocked;
 
     //just a wrapper for handleNewPage
     function handleNewTab(tab) {
-        handleNewPage(tab.url,tab.title,tab.incognito);
+        handleNewPage(tab.url, tab.title, tab.incognito);
     }
 
-    function handleNewPage(newUrl,newTitle,incognito) {
+    function handleNewPage(newUrl, newTitle, incognito) {
         //handle previous page
         var timeSpent = new Date() - startTime;
         //if small time spent on wasting, don't count
         if (timeSpent < settings.tolerance) {
             wastingTime = 0;
         }
-        var newest = [+startTime,timeSpent,wastingTime,url,title];
-        modifyTimeLine("add",newest);
+        var newest = [+startTime, timeSpent, wastingTime, url, title];
+        modifyTimeLine("add", newest);
         if (wastingTime) {
             changeTimeLeft(-timeSpent);
             //don't want to slow down event handler
             setTimeout(function() {
-                storeData("wasting",newest);
-            },0);
+                storeData("wasting", newest);
+            }, 0);
         }
         //handle new page
         startTime = new Date();     //consider converting to integer right here
 
-        var result = updateWindow(newUrl,newTitle,incognito,windowId,tabId);
+        var result = updateWindow(newUrl, newTitle, incognito, windowId, tabId);
         url = result.url;
         title = result.title;
         wastingTime = result.wasting;
@@ -295,7 +295,7 @@ var isBlocked;
             url:url,
             title:title
         };
-        sendContent("newPage",info);
+        sendContent("newPage", info);
 
         //check for returnTime to be more up to date
         if (startTime > nextTime + settings.tolerance) {
@@ -304,15 +304,15 @@ var isBlocked;
     }
 
 
-    function handleBackgroundPage(newUrl,newTitle,incognito,window) {
-        var result = updateWindow(newUrl,newTitle,incognito,window,windows[window].tab)
+    function handleBackgroundPage(newUrl, newTitle, incognito, window) {
+        var result = updateWindow(newUrl, newTitle, incognito, window, windows[window].tab);
         if (result.wasting !== wastingTime) {
             // refresh
-            handleNewPage(windows[windowId].url,windows[windowId].title);
+            handleNewPage(windows[windowId].url, windows[windowId].title);
         }
     }
 
-    function updateWindow(newUrl,newTitle,incognito,windowId,tab) {
+    function updateWindow(newUrl, newTitle, incognito, windowId, tab) {
         //TODO, make incognito a setting
         var url = incognito ? "incognito" : newUrl;
         var title = incognito ? "incognito" : newTitle;
@@ -344,7 +344,7 @@ var isBlocked;
     function matchesURL(url) {
         for (var lvl = 0 ; lvl < settings.blockUrls.length ; lvl++) {
             for (var i = 0 ; i < settings.blockUrls[lvl].length ; i++) {
-                if (new RegExp("^" + settings.blockUrls[lvl][i].replace(/\./g,"\\.").replace(/\*/g, ".*") + "$").test(url)) {
+                if (new RegExp("^" + settings.blockUrls[lvl][i].replace(/\./g, "\\.").replace(/\*/g, ".*") + "$").test(url)) {
                     return lvl + 1;
                 }
             }
@@ -353,15 +353,15 @@ var isBlocked;
     }
 
     //timeLine acts as an object
-    function modifyTimeLine(action,load) {
+    function modifyTimeLine(action, load) {
         if (action === "add") {
             timeLine.unshift(load);
         } else if (action === "remove") {
-            timeLine.splice(load[0],load[1]);
+            timeLine.splice(load[0], load[1]);
         } else if (action === "change") {
             if (load < timeLine.length || load < 0) {
                 if (timeLine[load][2]) {
-                    sendContent("change",[load,timeLine[load][2]]);
+                    sendContent("change", [load, timeLine[load][2]]);
                     timeLine[load][2] = 0;
                     changeTimeLeft(timeLine[load][1]);
                 }
@@ -386,7 +386,7 @@ var isBlocked;
         return timeLeftOutput;
         //ideally, shows lowest timeLeft at all points
         function timeLeftOutput() {
-            sendContent("timer",timeLeft);
+            sendContent("timer", timeLeft);
             var now = new Date();
             var timeSpent = now - startTime;
             var time = timeLeft - (wastingTime ? timeSpent : 0);
@@ -396,7 +396,7 @@ var isBlocked;
             var oneTab;
 
             //just check if reminder is needed for this time.
-            if (date > nextNoBlock) {
+            if (now > nextNoBlock) {
                 noBlockReminder();
             }
             var classInfo = checkNoBlock(now);
@@ -420,10 +420,10 @@ var isBlocked;
 
             if (VIPtab !== -1) {
                 var VIPinfo;
-                blocking.some((b,i) => {
+                blocking.some((b, i) => {
                     if (b.tab === VIPtab) {
                         // don't block this tab
-                        VIPinfo = blocking.splice(i,1)[0];
+                        VIPinfo = blocking.splice(i, 1)[0];
                         return true;
                     }
                 });
@@ -434,7 +434,7 @@ var isBlocked;
                 }
                 if (!tempVIPstartTime) {
                     if (VIPinfo) {
-                        oneTab = [VIPinfo,Infinity];
+                        oneTab = [VIPinfo, Infinity];
                     }
                     if (thisTab) {
                         displayTime = Infinity;
@@ -445,7 +445,7 @@ var isBlocked;
                     var VIPtimeLeft = settings.VIPlength - now + tempVIPstartTime;
                     if (time < VIPtimeLeft) {
                         if (VIPinfo) {
-                            oneTab = [VIPinfo,VIPtimeLeft];
+                            oneTab = [VIPinfo, VIPtimeLeft];
                         }
                         if (thisTab) {
                             //if not wasting time, vip will countDown, but stop when reach timeLeft
@@ -459,12 +459,12 @@ var isBlocked;
                 }
             }
 
-            countDownTimer(displayTime,endTime,countDown);
+            countDownTimer(displayTime, endTime, countDown);
             // this can change timeline, so put at very bottom
-            blockTab(blocking,time,blockType,oneTab);
+            blockTab(blocking, time, blockType, oneTab);
         }
 
-        function countDownTimer(time,endTime,countDown) {
+        function countDownTimer(time, endTime, countDown) {
             clearTimeout(displayTimeStarter);
             clearInterval(displayTimer);
             //don't have negative time
@@ -485,9 +485,9 @@ var isBlocked;
                             } else {
                                 clearInterval(displayTimer);
                             }
-                        },1000);
+                        }, 1000);
                     }
-                },delay);
+                }, delay);
             }
         }
 
@@ -511,20 +511,20 @@ var isBlocked;
         var blocked = [];
 
         //sets a reminder when timeLeft reaches 0, and blocks site
-        blockTab = function(tabs,time,blockType,oneTab) {
+        blockTab = function(tabs, time, blockType, oneTab) {
             // on blocked tab per window (all foreground should be blocked)
             if (oneTab || time < 0) {
-                blocked.some((b,i) => {
+                blocked.some((b, i) => {
                     // both of these are independent, but only one happens at a time
                     if (oneTab && b.tab === oneTab[0].tab) {
                         unblockTab(b);
-                        blocked.splice(i,1);
+                        blocked.splice(i, 1);
                         return true;
                     } else if (b.window == windowId) {
                         // do not unblock the site if tab hasn't changed and still no timeLeft
                         if (!(b.tab === tabId && time < 0)) {
                             unblockTab(b);
-                            blocked.splice(i,1);
+                            blocked.splice(i, 1);
                         }
                         return true;
                     }
@@ -548,10 +548,10 @@ var isBlocked;
                         tabs = tabs.filter((w) => w.tab !== tabId);
                     } else {
                         // if not focused, pick one
-                        tabs.some((b,i) => {
+                        tabs.some((b, i) => {
                             if (b.wasting === 2) {
                                 tab = b.tab;
-                                tabs.splice(i,1);
+                                tabs.splice(i, 1);
                                 return true;
                             }
                         });
@@ -559,8 +559,8 @@ var isBlocked;
                     if (tab !== -1) {
                         blockTimers.push(setTimeout(() => {
                             finish(tab);
-                            setAlarm(0,2);
-                        },time));
+                            setAlarm(0, 2);
+                        }, time));
                     }
                 }
                 block(tabs, time, blockType);
@@ -570,23 +570,23 @@ var isBlocked;
             }
         };
 
-        function block(tabs,time,blockType) {
+        function block(tabs, time, blockType) {
             var start = +new Date();
-            var delay = Math.max(time - settings.tolerance,settings.quickTabTime);
+            var delay = Math.max(time - settings.tolerance, settings.quickTabTime);
             blockTimers.push(setTimeout(() => {
                 var readys = tabs.map(() => false);
                 // when both callbacks end, block
                 var blockC = (tab, i) => {
                     if (readys[i]) {
-                        blockSite(tab,blockType);
+                        blockSite(tab, blockType);
                     }
                     readys[i] = true;
-                }
+                };
                 tabs.forEach((tab, i) => {
                     //note, won't inject if already injected
-                    injectScripts(tab.tab,blockType,function(ready) {
+                    injectScripts(tab.tab, blockType, function(ready) {
                         if (ready) {
-                            prepareBlock(tab,blockType,delay);
+                            prepareBlock(tab, blockType, delay);
                             blockC(tab, i);
                         }
                     });
@@ -595,11 +595,11 @@ var isBlocked;
                 var delay = time - new Date() + start;
                 blockTimers.push(setTimeout(() => {
                     tabs.forEach(blockC);
-                },delay));
-            },delay));
+                }, delay));
+            }, delay));
         }
 
-        function prepareBlock(tab,type,blockTime) {
+        function prepareBlock(tab, type, blockTime) {
             //if in the time to block, tab changes, don't block
             if (windows[tab.window].tab === tab.tab) {
                 //iframes need time to load, load beforehand if can
@@ -612,12 +612,12 @@ var isBlocked;
                         delay: blockTime
                     };
                 }
-                var data = {action:"prepare",info:info,type:type};
-                chrome.tabs.sendMessage(tab.tab,data);
+                var data = {action:"prepare", info:info, type:type};
+                chrome.tabs.sendMessage(tab.tab, data);
             }
         }
 
-        function blockSite(tab,type) {
+        function blockSite(tab, type) {
             //if in the time to block, tab changes, don't block
             if (windows[tab.window].tab === tab.tab) {
                 if (type === "time") {
@@ -633,8 +633,8 @@ var isBlocked;
                     };
                 }
 
-                data = {action:"block",info:info,type:type};
-                chrome.tabs.sendMessage(tab.tab,data,function(isBlocked) {
+                var data = {action:"block", info:info, type:type};
+                chrome.tabs.sendMessage(tab.tab, data, function(isBlocked) {
                     //when page is actually blocked, update timeline
                     if (isBlocked) {
                         blocked.push({
@@ -645,45 +645,44 @@ var isBlocked;
                             title: tab.title
                         });
                         if (tab.tab === tabId) {
-                            handleNewPage("Blocked","Blocked");
+                            handleNewPage("Blocked", "Blocked");
                         } else if (tab.tab === windows[tab.window].tab) {
-                            handleBackgroundPage("Blocked","Blocked", false, tab.window);
+                            handleBackgroundPage("Blocked", "Blocked", false, tab.window);
                         }
-                        storeData("block",[+new Date(),tab.url]);
+                        storeData("block", [+new Date(), tab.url]);
                     }
                 });
             }
         }
 
         function unblockTab(tab) {
-            chrome.tabs.sendMessage(tab.tab,sendFormat("unblock"),(unblocked) => {
+            chrome.tabs.sendMessage(tab.tab, sendFormat("unblock"), (unblocked) => {
                 // important to not run in same thread to allow this one to finish to avoid recursion problems
                 if (unblocked) {
                     if (tab.tab === tabId) {
-                        handleNewPage(tab.url,tab.title);
+                        handleNewPage(tab.url, tab.title);
                     } else if (tab.tab === windows[tab.window].tab) {
                         // doesn't handle edge case of incognito on unblock
                         handleBackgroundPage(tab.url, tab.title, false, tab.window);
                     }
                 }
             });
-        };
+        }
 
         function unblockAll() {
-            var thisTab;
             blocked.forEach((b) => {
                 unblockTab(b);
             });
             blocked = [];
-        };
+        }
 
-        sendContent = function(action,input,content) {
+        sendContent = function(action, input, content) {
             //only send to content scripts
             if (!content) {
-                sendRequest(action,input);
+                sendRequest(action, input);
             }
             blocked.forEach((b) => {
-                chrome.tabs.sendMessage(b.tab,sendFormat(action,input));
+                chrome.tabs.sendMessage(b.tab, sendFormat(action, input));
             });
         };
 
@@ -712,10 +711,10 @@ var isBlocked;
                     "/css/timeLine.css"]
             };
             return injectScripts;
-            function injectScripts(tab,blockType,callback) {
+            function injectScripts(tab, blockType, callback) {
                 //see if the page is already injected, and what type
                 var data = {action:"ping"};
-                chrome.tabs.sendMessage(tab,data,function(blockTypes) {
+                chrome.tabs.sendMessage(tab, data, function(blockTypes) {
                     var injectTypes;
                     if (blockTypes) {
                         //if there, but wrong block type
@@ -725,7 +724,7 @@ var isBlocked;
                     } else {
                         //if not there, inject
                         //want content.js to be last, jquery order doesn't matter until files are called
-                        injectTypes = ["all",blockType];
+                        injectTypes = ["all", blockType];
                     }
                     if (injectTypes && injectTypes.length) {
                         var list = [];
@@ -736,11 +735,11 @@ var isBlocked;
                         if (injecting) {
                             //ping again
                             injectQueue.push(function() {
-                                injectScripts(tab,blockType,callback);
+                                injectScripts(tab, blockType, callback);
                             });
                         } else {
                             injecting = true;
-                            addContentScript(tab,list,0,function(ready) {
+                            addContentScript(tab, list, 0, function(ready) {
                                 injecting = false;
                                 callback(ready);
                                 if (injectQueue.length) {
@@ -755,11 +754,11 @@ var isBlocked;
                 });
             }
 
-            function addContentScript(tab,list,i,callback) {
+            function addContentScript(tab, list, i, callback) {
                 var file = list[i];
                 if (file) {
                     var inject = file.substring(file.lastIndexOf(".")) === ".js" ? chrome.tabs.executeScript : chrome.tabs.insertCSS;
-                    inject(tab,{file:file},function() {
+                    inject(tab, {file:file}, function() {
                         if (chrome.runtime.lastError) {
                             //this happens a lot due to closing of tab
                             //don't show front end
@@ -767,7 +766,7 @@ var isBlocked;
                             callback(false);
                             return;
                         }
-                        addContentScript(tab,list,i + 1,callback);
+                        addContentScript(tab, list, i + 1, callback);
                     });
                 } else {
                     //if end of list, or if list is empty
@@ -805,7 +804,7 @@ var isBlocked;
         }
 
         if (cnt) {
-            modifyTimeLine("remove",[endingIndex + 1,cnt]);
+            modifyTimeLine("remove", [endingIndex + 1, cnt]);
         }
 
         //return time and calculate when to call function again
@@ -815,7 +814,7 @@ var isBlocked;
             if (timeLine[i][2]) {
                 //note timeLeft can be negative
                 if (timeLeft - currentTimeOffset > timeTotal) {
-                    modifyTimeLine("change",i);
+                    modifyTimeLine("change", i);
                 } else {
                     completed = true;
                     break;
@@ -829,11 +828,11 @@ var isBlocked;
         }
         timeLeftOutput();
         //upper limit can be passed if currently in very long wastingTime
-        var nextDelay = Math.min(timeTotal - timeLeft + currentTimeOffset,settings.timeLineLength - settings.startingTimeLeft);
+        var nextDelay = Math.min(timeTotal - timeLeft + currentTimeOffset, settings.timeLineLength - settings.startingTimeLeft);
         //used to make sure that this is called at appropriate times
         nextTime = +new Date() + nextDelay;
         clearTimer(returnTimer);
-        returnTimer = setTimer(returnTime,nextDelay);
+        returnTimer = setTimer(returnTime, nextDelay);
     }
 
     ///////////// Requests from outside ///////////
@@ -850,7 +849,7 @@ var isBlocked;
             url:url,
             title:title
         };
-        sendContent("reset",info);
+        sendContent("reset", info);
     }
 
     function makeTabVIP(tab) {
@@ -876,13 +875,13 @@ var isBlocked;
     function tempVIP() {
         wasteStreak++;
         //so that you can't auto finish from temps
-        handleNewPage(url,title);
+        handleNewPage(url, title);
         makeTabVIP();
         tempVIPstartTime = +new Date();
         tempVIPtimer = setTimeout(function() {
             VIPtab = -1;
             tempVIPstartTime = 0;
-        },settings.VIPlength);
+        }, settings.VIPlength);
         timeLeftOutput();
     }
 
@@ -894,15 +893,15 @@ var isBlocked;
             }
             if (wastingTime) {
                 //change the current one and restart counter
-                sendContent("change",[timeLineIndex,wastingTime]);
+                sendContent("change", [timeLineIndex, wastingTime]);
                 wastingTime = 0;
-                handleNewPage(url,title);
+                handleNewPage(url, title);
             }
         } else {
             if (timeLine[timeLineIndex] < settings.minChange) {
                 return;
             }
-            modifyTimeLine("change",timeLineIndex);
+            modifyTimeLine("change", timeLineIndex);
         }
         returnTime();
         timeLeftOutput();
@@ -931,7 +930,7 @@ var isBlocked;
         if (isFinite(currentNo[0]) && !currentNo[2]) {
             currentNo[1] = now;
             //TODO better way to do this, for now redo entire thing
-            sendContent("stopNoBlock",noBlocks);
+            sendContent("stopNoBlock", noBlocks);
         }
         timeLeftOutput();
         noBlockReminder();

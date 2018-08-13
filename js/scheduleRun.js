@@ -1,3 +1,3 @@
 chrome.runtime.getBackgroundPage(function(background) {
-    scheduleInit($("body"),background);
+    scheduleInit($("body"), background);
 });

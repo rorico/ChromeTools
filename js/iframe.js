@@ -4,10 +4,10 @@ var iframe;
     var loading = [];
     var width;
     var loadingTime = 2000; //2 secs
-    var ASPECT_RATIO = [16,12];
+    var ASPECT_RATIO = [16, 12];
     iframe = init;
 
-    function init(container,background) {
+    function init(container, background) {
         var iframeInfo = background.iframeInfo;
         //create foundation for iframes
         var html = "<div id='" + iframeId + "'>";
@@ -16,7 +16,7 @@ var iframe;
         }
         html += "</div>";
         container.append(html);
-        updateIframes(iframeInfo,true);
+        updateIframes(iframeInfo, true);
         resize();
         return {
             resize: resize,
@@ -26,42 +26,42 @@ var iframe;
         function resize() {
             var iframe = $("#" + iframeId + " .iframe");
             var iframeHolder = $("#" + iframeId);
-            var maxWidth = Math.min(container.width()/iframeInfo.length - 60,450);
-            width = roundTo(maxWidth,ASPECT_RATIO[1]);
+            var maxWidth = Math.min(container.width()/iframeInfo.length - 60, 450);
+            width = roundTo(maxWidth, ASPECT_RATIO[1]);
             var height = width / ASPECT_RATIO[1] * ASPECT_RATIO[0];
             //this sets up max height
-            iframeHolder.css("flex-basis",(height + 60) + "px");
+            iframeHolder.css("flex-basis", (height + 60) + "px");
             var trueHeight = iframe.height();
             if (trueHeight < height) {
-                height = roundTo(trueHeight,ASPECT_RATIO[0]);
-                iframeHolder.css("flex-basis",(height + 60) + "px");
+                height = roundTo(trueHeight, ASPECT_RATIO[0]);
+                iframeHolder.css("flex-basis", (height + 60) + "px");
                 width = height / ASPECT_RATIO[0] * ASPECT_RATIO[1];
             }
             iframe.width(width);
         }
 
-        function roundTo(num,round) {
+        function roundTo(num, round) {
             var div = num % round;
             return num - div;
         }
     }
 
     function update(background) {
-        updateIframes(background.iframeInfo,background.delay);
+        updateIframes(background.iframeInfo, background.delay);
     }
 
     //second argument can be empty
-    function updateIframes(iframeInfo,time) {
+    function updateIframes(iframeInfo, time) {
         //hide first, then when they are loaded, move them up
         for (var i = 0 ; i < iframeInfo.length ; i++) {
             if (!loading[i]) {
-                updateUrl(iframeInfo[i],i,time);
+                updateUrl(iframeInfo[i], i, time);
             }
         }
     }
 
     //time is earliest time until block
-    function updateUrl(info,i,time) {
+    function updateUrl(info, i, time) {
         var url = info.url;
         var reload = info.reload;
         //hide until loaded, unless nothing there in the first place
@@ -82,7 +82,7 @@ var iframe;
                 loading[i] = false;
             });
         } else {
-            var loadTime = Math.max(loadingTime,time);
+            var loadTime = Math.max(loadingTime, time);
             //the reason I don't go off the event, is that some internal js still runs to load page
             //run on the last of the two
             var loaded = false;
@@ -104,7 +104,7 @@ var iframe;
                 stopIframeFocus(ele);
                 check();
             });
-            setTimeout(check,loadTime);
+            setTimeout(check, loadTime);
         }
     }
 
@@ -127,7 +127,7 @@ var iframe;
         function init() {
             list = {};
 
-            $(document).on("focusout",function(e) {
+            $(document).on("focusout", function(e) {
                 //when we call focus, we trigger another focusout, ignore it
                 if (waiting) {
                     waiting = false;
@@ -150,10 +150,10 @@ var iframe;
                             waiting = true;
                             setTimeout(function() {
                                 waiting = false;
-                            },100);
+                            }, 100);
                         }
                     }
-                },0);
+                }, 0);
             });
         }
         return stopIframeFocus;

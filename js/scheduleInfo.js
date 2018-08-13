@@ -10,8 +10,8 @@ addDefault("endHour", 19, "int");   // 7pm
 
 addMessageListener({
     "resetSchedule": setScheduleInfo,
-    "weekSchedule": function(a,b,c) {
-        weekSchedule(a.input,c);
+    "weekSchedule": function(a, b, c) {
+        weekSchedule(a.input, c);
     }
 });
 setNextDay();
@@ -42,11 +42,11 @@ function setScheduleInfo() {
 // update today when next day passes
 function setNextDay() {
     date = new Date();
-    var nextDay = new Date(date.getFullYear(),date.getMonth(),date.getDate() + 1);
+    var nextDay = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1);
     setTimer(function() {
         setScheduleInfo();
         setNextDay();
-    },nextDay - date);
+    }, nextDay - date);
 }
 
 var todaySchedule = (function() {
@@ -61,8 +61,8 @@ var todaySchedule = (function() {
                 var classes = type[1];
                 for (var k = 0 ; k < classes.length ; k++) {
                     var cls = classes[k];
-                    if (sameDOW(date,cls[1][0])&&isInRange(date,cls[2])) {
-                        today.push([cls[0],cls[1],course[0],type[0]]);
+                    if (sameDOW(date, cls[1][0])&&isInRange(date, cls[2])) {
+                        today.push([cls[0], cls[1], course[0], type[0]]);
                     }
                 }
             }
@@ -71,12 +71,12 @@ var todaySchedule = (function() {
         return today;
     }
 
-    function sameDOW(date,DOW) { //same day of week
+    function sameDOW(date, DOW) { //same day of week
         var dayOfWeek = (new Date(date)).getDay();
         return DOW.indexOf(dayOfWeek) > -1;
     }
 
-    function isInRange(date,range) {
+    function isInRange(date, range) {
         // convert from date/timestamp to YYYY-MM-DD
         var da = new Date(date-timezoneOffset).toISOString().split("T")[0];
         // this is an alphabetic compare
@@ -87,14 +87,14 @@ var todaySchedule = (function() {
         return new (Function.prototype.bind.apply(Cls, arguments));
     }
 
-    function sort_by_date(a,b) {
+    function sort_by_date(a, b) {
         if (a[1][1] < b[1][1]) return -1;
         if (a[1][1] > b[1][1]) return 1;
         return 0;
     }
 })();
 
-function weekSchedule(dates,callback) {
+function weekSchedule(dates, callback) {
     var ret = [];
     for (var i = 0 ; i < dates.length ; i++) {
         ret.push(todaySchedule(dates[i]));

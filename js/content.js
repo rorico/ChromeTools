@@ -5,19 +5,19 @@ var oldFocus;
 
 var blockScreen = $("<div id='" + blockId + "'></div>");
 $("body").append(blockScreen);
-$(document).on("webkitfullscreenchange",function() {
+$(document).on("webkitfullscreenchange", function() {
     if (!hidden) {
         move(document.webkitFullscreenElement || document.getElementsByTagName("body")[0]);
     }
 });
 
-function prepare(type,info) {
-    if (currentType(type,info)) {
+function prepare(type, info) {
+    if (currentType(type, info)) {
         blockObj.prepare(info);
     }
 }
 
-function block(type,info,callback) {
+function block(type, info, callback) {
     var appendTo;
     //assuming this is run on chrome
     var full = document.webkitFullscreenElement;
@@ -33,7 +33,7 @@ function block(type,info,callback) {
     }
     move(appendTo);
 
-    if (currentType(type,info)) {
+    if (currentType(type, info)) {
         blockObj.update(info);
     }
     //hold focus to give back when unblocking
@@ -52,16 +52,16 @@ function move(toContainer) {
     }
 }
 
-function currentType(type,info) {
+function currentType(type, info) {
     if (blockObj && blockObj.type === type) {
         return true;
     } else {
-        init(type,info);
+        init(type, info);
         return false;
     }
 }
 
-function init(type,info) {
+function init(type, info) {
     blockScreen.empty().off();
     blockObj = {type:type};
     var nullFunct = function() {};
@@ -70,25 +70,25 @@ function init(type,info) {
             console.log(type + " content script missing");
         } else {
             var key = keyPressInit(blockScreen);
-            var time = timeLineInit(blockScreen,info);
-            var frame = iframe(blockScreen,info);
+            var time = timeLineInit(blockScreen, info);
+            var frame = iframe(blockScreen, info);
             blockObj.update = function(info) {
                 time.update(info);
-            }
+            };
             blockObj.prepare = function(info) {
                 frame.update(info);
-            }
+            };
             blockObj.resize = function() {
                 time.resize();
                 frame.resize();
-            }
+            };
         }
     } else {
         if (typeof scheduleInit === "undefined") {
             console.log(type + " content script missing");
         } else {
             info.weekSchedule = weekSchedule;
-            var obj = scheduleInit(blockScreen,info);
+            var obj = scheduleInit(blockScreen, info);
             blockObj.update = nullFunct;
             blockObj.prepare = nullFunct;
             blockObj.resize = obj.resize;
@@ -106,17 +106,17 @@ function unblock() {
 }
 
 //same paramaters as background, works the same
-function weekSchedule(dates,callback) {
-    sendRequest("weekSchedule",dates,callback);
+function weekSchedule(dates, callback) {
+    sendRequest("weekSchedule", dates, callback);
 }
 
 chrome.runtime.onMessage.addListener(function listener(a, b, c) {
     switch (a.action) {
         case "prepare":
-            prepare(a.type,a.info);
+            prepare(a.type, a.info);
             break;
         case "block":
-            return block(a.type,a.info,c);
+            return block(a.type, a.info, c);
         case "unblock":
             unblock();
             c(true);
@@ -132,10 +132,10 @@ chrome.runtime.onMessage.addListener(function listener(a, b, c) {
 });
 
 //send requests to background
-function sendRequest(action,input,callback) {
+function sendRequest(action, input, callback) {
     chrome.runtime.sendMessage({
         from: "content",
         action: action,
         input: input
-    },callback);
+    }, callback);
 }

@@ -7,9 +7,9 @@ var timerQueue = [];
 var curTimerId = 0;
 var timerHandlers = [];
 
-function setTimer(funct,delay) {
+function setTimer(funct, delay) {
     if (!delay || delay < timerThreshold) {
-        timerHandlers[++curTimerId] = [0,setTimeout(funct,delay)];
+        timerHandlers[++curTimerId] = [0, setTimeout(funct, delay)];
         return curTimerId;
     } else {
         var index = 0;
@@ -21,11 +21,11 @@ function setTimer(funct,delay) {
                 index++;
             }
         }
-        timerQueue.splice(index,0,[++curTimerId,runTime,funct]);
+        timerQueue.splice(index, 0, [++curTimerId, runTime, funct]);
         if (!index) {
             //if using alarms for anything else, change clearAll
             chrome.alarms.clearAll();
-            chrome.alarms.create("timer",{when:runTime});
+            chrome.alarms.create("timer", {when:runTime});
         }
         timerHandlers[curTimerId] = [1];
         return curTimerId;
@@ -40,10 +40,10 @@ function clearTimer(handlerId) {
             //can use another array, but will likely have more overhead due to low use of this
             for (var i = 0 ; i < timerQueue.length ; i++) {
                 if (handlerId === timerQueue[i][0]) {
-                    timerQueue.splice(i,1);
+                    timerQueue.splice(i, 1);
                     if (i === 0 && timerQueue.length) {
                         chrome.alarms.clearAll();
-                        chrome.alarms.create("timer",{when:timerQueue[0][1]});
+                        chrome.alarms.create("timer", {when:timerQueue[0][1]});
                     }
                     break;
                 }
@@ -61,15 +61,15 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
         for (var i = 0 ; i < timerQueue.length ; i++) {
             if (timerQueue[i][1] < threshold) {
                 //change the handler to how it would be when creating a timeout, so it can be cleared properly
-                timerHandlers[timerQueue[i][0]] = [0,setTimeout(timerQueue[i][2],timerQueue[i][1] - new Date())];
+                timerHandlers[timerQueue[i][0]] = [0, setTimeout(timerQueue[i][2], timerQueue[i][1] - new Date())];
                 cnt++;
             } else {
                 break;
             }
         }
-        timerQueue.splice(0,cnt);
+        timerQueue.splice(0, cnt);
         if (timerQueue.length) {
-            chrome.alarms.create("timer",{when:timerQueue[0][1]});
+            chrome.alarms.create("timer", {when:timerQueue[0][1]});
         }
     }
 });

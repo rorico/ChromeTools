@@ -15,7 +15,7 @@ function log(arg) {
 }
 
 function addLog(message) {
-    allLogs.push([message,true]);
+    allLogs.push([message, true]);
     numUnread++;
 }
 
