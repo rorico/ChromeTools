@@ -501,7 +501,7 @@ var isBlocked;
                 return "\u221e";
             } else {
                 var secs = Math.ceil(milli/1000);
-                return Math.floor(secs/60)  + ":" + ("0" + Math.floor(secs%60)).slice(-2);
+                return Math.floor(secs/60) + ":" + ("0" + Math.floor(secs%60)).slice(-2);
             }
         }
     })();

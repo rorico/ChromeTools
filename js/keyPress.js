@@ -52,7 +52,7 @@ var addArrowListener;
                         }
                     }
                 }
-            } else  {
+            } else {
                 var found = false;
                 for (var i = 0 ; i < phrases.length ; i++) {
                     if (e.keyCode === phrases[i][0].charCodeAt(0)) {

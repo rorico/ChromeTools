@@ -173,7 +173,7 @@ var timeLineInit;
         function add(index, start, time, wastingTime) {
             var ret = true;
             if (start < oldest) {
-                time +=  start - oldest;
+                time += start - oldest;
                 ret = false;
             }
             timelineHtml = (addTimeLine(index, time, wastingTime, false, true) || "") + timelineHtml;
@@ -429,7 +429,7 @@ var timeLineInit;
 
     function MinutesSecondsFormat(milli, up) {
         var secs = up ? Math.floor(milli/1000) : Math.ceil(milli/1000);
-        return Math.floor(secs/60)  + ":" + ("0" + Math.floor(secs%60)).slice(-2);
+        return Math.floor(secs/60) + ":" + ("0" + Math.floor(secs%60)).slice(-2);
     }
 
     function resetTimeLine() {
