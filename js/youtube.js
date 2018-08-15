@@ -130,6 +130,7 @@ var youtubeVideoNames = [];
     }
 
     function changeVolume(dir) {
+        youtubeTabs(function(tabs) {
             var data = {action:"changeVolume", input:dir};
             for (var i = 0 ; i < tabs.length ; i++) {
                 chrome.tabs.sendMessage(tabs[i].id, data);
