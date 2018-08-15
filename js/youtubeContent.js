@@ -54,6 +54,11 @@ function changeTime(dir) {
     p.currentTime = p.currentTime + dir*10;
 }
 
+// not this doesn't change volume bar
+function changeVolume(dir) {
+    p.volume = p.volume + dir*0.05;
+}
+
 function getState() {
     if (p.paused) {
         return "pause";
@@ -94,6 +99,9 @@ chrome.runtime.onMessage.addListener(function listener(a, b, c) {
         case "listen":
             listen(c);
             return true;
+        case "changeVolume":
+            changeVolume(a.input);
+            break;
     }
 });
 

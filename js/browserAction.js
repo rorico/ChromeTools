@@ -36,6 +36,12 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
         removeAlarm(num - 1);  //0 index
     }, "D");
     addNumberListener(changeTimer);
+    addArrowListener("ArrowUp",() => {
+        changeVolume(1)
+    });
+    addArrowListener("ArrowDown",() => {
+        changeVolume(-1)
+    });
 
     alertLogs();
 
@@ -223,6 +229,10 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
 
     function snooze() {
         sendRequest("snooze");
+    }
+
+    function changeVolume(dir) {
+        sendRequest("changeVolume", dir);
     }
 
     //send requests to background

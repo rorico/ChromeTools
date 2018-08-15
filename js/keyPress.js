@@ -2,10 +2,12 @@ var keyPressInit;
 var addPhrase;
 var addPhrases;
 var addNumberListener;
+var addArrowListener;
 (function() {
     var holderId = "#chromeTools_keyPress";
     var phrases = [];
     var numberListeners = [];
+    var arrowListeners = {};
 
     var currentPhrase = 0;
     var phraseIndex = 0;
@@ -86,6 +88,12 @@ var addNumberListener;
                     }
                 }
             }
+            // arrow keys
+            if (e.keyCode >= 37 && e.keyCode <= 40) {
+                if (arrowListeners[e.key]) {
+                    arrowListeners[e.key]();
+                }
+            }
         }).keyup(function(e) {
             for (var i = 0 ; i < numberListeners.length ; i++) {
                 if (numberListeners[i][1] && e.keyCode === numberListeners[i][1].charCodeAt(0)) {
@@ -113,6 +121,10 @@ var addNumberListener;
             numberListeners.push([funct]);
         }
     };
+
+    addArrowListener = function(arrow, funct) {
+        arrowListeners[arrow] = funct;
+    }
 
     function startShowHotkey(phrase, start) {
         var front = "<div id='phraseFront'>";

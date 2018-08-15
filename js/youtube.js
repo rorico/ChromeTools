@@ -13,6 +13,9 @@ var youtubeVideoNames = [];
         },
         "skipAd": function(a, b) {
             skipAd(b.tab);
+        },
+        "changeVolume": function(a) {
+            changeVolume(a.input);
         }
     });
 
@@ -120,6 +123,14 @@ var youtubeVideoNames = [];
     function skipAd() {
         youtubeTabs(function(tabs) {
             var data = {action:"skipAd"};
+            for (var i = 0 ; i < tabs.length ; i++) {
+                chrome.tabs.sendMessage(tabs[i].id, data);
+            }
+        });
+    }
+
+    function changeVolume(dir) {
+            var data = {action:"changeVolume", input:dir};
             for (var i = 0 ; i < tabs.length ; i++) {
                 chrome.tabs.sendMessage(tabs[i].id, data);
             }
