@@ -33,32 +33,6 @@ function skipAd() {
     return false;
 }
 
-function pause() {
-    if (!p.paused) {
-        p.pause();
-        return true;
-    }
-    return false;
-}
-
-function play() {
-    if (p.paused) {
-        p.play();
-        return true;
-    }
-    return false;
-}
-
-function changeTime(dir) {
-    //simulate youtube j and l keys
-    p.currentTime = p.currentTime + dir*10;
-}
-
-// not this doesn't change volume bar
-function changeVolume(dir) {
-    p.volume = p.volume + dir*0.05;
-}
-
 function getState() {
     if (p.paused) {
         return "pause";
@@ -76,32 +50,28 @@ function listen(c) {
     window.onbeforeunload = c;
 }
 
+function key(keyCode) {
+    var e = new KeyboardEvent("keydown", {
+        keyCode: keyCode,
+        which: keyCode
+    })
+    document.getElementById("movie_player").dispatchEvent(e);
+}
+
 chrome.runtime.onMessage.addListener(function listener(a, b, c) {
     switch (a.action) {
-        case "pause":
-            c(pause());
+        case "getState":
+            c(getState());
             break;
-        case "play":
-            c(play());
+        case "key":
+            key(a.input);
             break;
         case "skipAd":
             c(skipAd());
             break;
-        case "forward":
-            changeTime(1);
-            break;
-        case "back":
-            changeTime(-1);
-            break;
-        case "getState":
-            c(getState());
-            break;
         case "listen":
             listen(c);
             return true;
-        case "changeVolume":
-            changeVolume(a.input);
-            break;
     }
 });
 

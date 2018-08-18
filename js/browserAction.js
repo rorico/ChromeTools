@@ -36,12 +36,6 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
         removeAlarm(num - 1);  //0 index
     }, "D");
     addNumberListener(changeTimer);
-    addArrowListener("ArrowUp",() => {
-        changeVolume(1)
-    });
-    addArrowListener("ArrowDown",() => {
-        changeVolume(-1)
-    });
 
     alertLogs();
 
@@ -178,7 +172,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
             if (youtube.length) {
                 //play symbol, may want to change
                 youtubeButton = topButton(youtube, "&#9658;", "right", false, function(index) {
-                    sendRequest("youtube", index);
+                    sendRequest("youtubePlay", index);
                 });
             }
         }
@@ -229,10 +223,6 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
 
     function snooze() {
         sendRequest("snooze");
-    }
-
-    function changeVolume(dir) {
-        sendRequest("changeVolume", dir);
     }
 
     //send requests to background

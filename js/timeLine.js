@@ -32,9 +32,9 @@ var timeLineInit;
                     ["NO", zero],
                     ["MO", antizero, 8],
                     ["P", skipAd],
-                    ["K", youtubeK],
-                    ["J", youtubeJ],
-                    ["L", youtubeL]];
+                    ["K", () => youtube("K".charCodeAt(0))],
+                    ["J", () => youtube("J".charCodeAt(0))],
+                    ["L", () => youtube("L".charCodeAt(0))]];
 
     //this is the global scope
     timeLineInit = init;
@@ -71,6 +71,9 @@ var timeLineInit;
 
         // setup keypress
         addPhrases(keyPhrases);
+
+        addArrowListener("ArrowUp", () => youtube(38));
+        addArrowListener("ArrowDown", () => youtube(40));
 
         //need this when modal is moved
         function timeLineResize() {
@@ -460,14 +463,8 @@ var timeLineInit;
         sendRequest("antizero");
     }
 
-    function youtubeJ() {
-        sendRequest("youtube", "J");
-    }
-    function youtubeK() {
-        sendRequest("youtube", "K");
-    }
-    function youtubeL() {
-        sendRequest("youtube", "L");
+    function youtube(key) {
+        sendRequest("youtube", key);
     }
 
     function skipAd() {
