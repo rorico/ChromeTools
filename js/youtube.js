@@ -107,6 +107,19 @@ var youtubeVideoNames = [];
         title = title.substr(0, title.lastIndexOf(" - YouTube"));
         youtubeVideoIds.push(id);
         youtubeVideoNames.push(title);
+        chrome.tabs.sendMessage(id, {action:"listen"}, () => {
+            if (youtubeVideoIds.length === 1 && youtubeVideoIds[0] === id) {
+                emptyList();
+            } else {
+                youtubeVideoIds.some((vId, i) => {
+                    if (vId === id) {
+                        youtubeVideoIds.splice(i, 1);
+                        youtubeVideoNames.splice(i, 1);
+                        return true;
+                    }
+                });
+            }
+        });
     }
 
     function emptyList() {
@@ -142,11 +155,6 @@ var youtubeVideoNames = [];
             addTab(tab.id, tab.title);
             sendRequest("youtube");
             youtubeVideoIds.ended = true;
-            chrome.tabs.sendMessage(tab.id, {action:"listen"}, function() {
-                if (youtubeVideoIds.ended && youtubeVideoIds[0] === tab.id) {
-                    emptyList();
-                }
-            });
         }
     }
 })();
