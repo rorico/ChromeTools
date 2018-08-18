@@ -44,11 +44,9 @@ var youtubeVideoNames = [];
             var num = tabs.length;
             Promise.all(tabs.map((tab) => getState(tab.id))).then((states) => {
                 var playing = tabs.filter((tab, i) => states[i] === "play");
-                console.log(playing)
                 if (index === "K".charCodeAt(0)) {
                     if (playing.length) {
                         emptyList();
-
                         playing.forEach((t) => {
                             chrome.tabs.sendMessage(t.id, sendFormat("key", index));
                             addTab(t.id, t.title);
