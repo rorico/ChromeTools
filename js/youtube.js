@@ -43,60 +43,13 @@ var youtubeVideoNames = [];
             play(youtubeVideoIds.splice(index, 1)[0]);
             youtubeVideoNames.splice(index, 1);
         } else {
-            youtubeTabs(function(tabs) {
-                //if tabs is empty, nothing to play anyways
-                var states = [];
-                var numPlaying = 0;
-
+            youtubeTabs((tabs) => {
                 var cnt = 0;
                 var num = tabs.length;
-                for (var i = 0 ; i < num ; i++) {
-                    getState(tabs[i].id, i);
-                }
-
-                function getState(id, i, repeat) {
-                    var data = {action:"getState"};
-                    chrome.tabs.sendMessage(id, data, function(state) {
-                        //script missing from the tab, inject
-                        if (state === undefined && !repeat) {
-                            chrome.tabs.executeScript(id, {file:scriptUrl}, function() {
-                                if (chrome.runtime.lastError) {
-                                    //something went wrong here, don't try again, just move on
-                                    log(chrome.runtime.lastError);
-                                    action();
-                                } else {
-                                    //make sure not to get in infinite loop
-                                    getState(id, i, true);
-                                }
-                            });
-                        } else {
-                            states[i] = state;
-                            if (state === "play") {
-                                numPlaying++;
-                            }
-                            cnt++;
-                            if (cnt === num) {
-                                action();
-                            }
-                        }
-                    });
-                }
-
-                function action() {
-                    if (index && index !== "K") {
-                        if (numPlaying) {
-                            for (var i = 0 ; i < num ; i++) {
-                                if (states[i] === "play") {
-                                    var tab = tabs[i];
-                                    var data = {action:index === "J" ? "back" : "forward"};
-
-                                    chrome.tabs.sendMessage(tab.id, data);
-                                }
-                            }
-                        }
-                        return;
-                    } else {
-                        if (numPlaying) {
+                Promise.all(tabs.map((tab) => getState(tab.id))).then((states) => {
+                    var playing = states.some((s) => s === "play");
+                    if (index === "K") {
+                        if (playing) {
                             emptyList();
                             for (var i = 0 ; i < num ; i++) {
                                 if (states[i] === "play") {
@@ -114,7 +67,39 @@ var youtubeVideoNames = [];
                         } else if (isBlocked()) {
                             playCurrent(tabs);
                         }
+                    } else if (playing) {
+                        for (var i = 0 ; i < num ; i++) {
+                            if (states[i] === "play") {
+                                var tab = tabs[i];
+                                var data = {action:index === "J" ? "back" : "forward"};
+
+                                chrome.tabs.sendMessage(tab.id, data);
+                            }
+                        }
                     }
+                });
+
+                function getState(id, repeat) {
+                    return new Promise(function(resolve, reject) {
+                        var data = {action:"getState"};
+                        chrome.tabs.sendMessage(id, data, function(state) {
+                            //script missing from the tab, inject
+                            if (state === undefined && !repeat) {
+                                chrome.tabs.executeScript(id, {file:scriptUrl}, function() {
+                                    if (chrome.runtime.lastError) {
+                                        //something went wrong here, don't try again, just move on
+                                        log(chrome.runtime.lastError);
+                                        reject();
+                                    } else {
+                                        //make sure not to get in infinite loop
+                                        resolve(getState(id, true));
+                                    }
+                                });
+                            } else {
+                                resolve(state);
+                            }
+                        });
+                    });
                 }
             });
         }
