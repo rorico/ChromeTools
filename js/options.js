@@ -19,7 +19,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var res = histogram(typeData, (t) => {
                 return [
                     nearestHour(t[0]),
-                    getWebsiteName(t[1], level)
+                    getWebsiteName(t[1], level, t[2])
                 ];
             });
 
@@ -53,7 +53,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var res = histogram(typeData, (t) => {
                 return [
                     t[0],
-                    level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3], level),
+                    level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3], level, t[4]),
                     t[1]
                 ];
             });
@@ -144,28 +144,30 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             }
         }
 
-        function getWebsiteName(name, nameLevel) {
-            name = (typeof name === "string" ? name : "unnamed");
-            var ret = name;
-            switch(nameLevel) {
+        function getWebsiteName(url, level, title) {
+            url = (typeof url === "string" ? url : "unnamed");
+            var ret = url;
+            switch(level) {
                 case 2:
-                    ret = getBaseUrl(name);
+                    ret = getBaseUrl(url);
                     break;
                 case 1:
-                    var base = getBaseUrl(name);
+                    var base = getBaseUrl(url);
                     var lookFor = "reddit.com/r/";
-                    var index = name.indexOf(lookFor);
+                    var index = url.indexOf(lookFor);
                     if (index !== -1) {
-                        var rest = name.substring(index + lookFor.length);
+                        var rest = url.substring(index + lookFor.length);
                         var slashIndex = rest.indexOf("/");
                         var subreddit = rest.substring(0, (slashIndex === -1 ? rest.length : slashIndex));
                         ret = base + " -> " + subreddit;
+                    } else if (url.indexOf("youtube.com") !== -1 && title) {
+                        ret = base + " -> " + title;
                     } else {
                         ret = base;
                     }
                     break;
                 case 0:
-                    ret = name;
+                    ret = url;
                     break;
             }
             return ret;

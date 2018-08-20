@@ -649,7 +649,7 @@ var isBlocked;
                         } else if (tab.tab === windows[tab.window].tab) {
                             handleBackgroundPage("Blocked", "Blocked", false, tab.window);
                         }
-                        storeData("block", [+new Date(), tab.url]);
+                        storeData("block", [+new Date(), tab.url, tab.title]);
                     }
                 });
             }
