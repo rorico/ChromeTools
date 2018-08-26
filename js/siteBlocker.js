@@ -216,8 +216,11 @@ var isBlocked;
                 //this should be consistent with handleNewTab
                 //want to change, but this is simpler for now
                 if (windows[windowId].tab === id) {
-                    title = tab.incognito ? "incognito" : changeInfo.title;
-                    windows[windowId].title = title;
+                    var newTitle = tab.incognito ? "incognito" : changeInfo.title;
+                    windows[windowId].title = newTitle;
+                    if (windows[windowId].url === url) {
+                        title = newTitle;
+                    }
                 }
             }
         }
