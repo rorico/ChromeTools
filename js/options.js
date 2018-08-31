@@ -1,10 +1,10 @@
 chrome.runtime.getBackgroundPage(function(backgroundPage) {
     var processRedirect;
     var processTimeLine;
+    var minuteAmount = 60000; //num of millisec
     (function() {
-        var hourAmount = 3600000; //num of millisec
         var defaultZoom = 604800000; //1 week
-        processRedirect = function(typeData, level) {
+        processRedirect = function(typeData, level, interval) {
             var options = {
                 yAxis: {
                     title: {
@@ -15,17 +15,17 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
 
             var res = histogram(typeData, (t) => {
                 return [
-                    nearestHour(t[0]),
+                    nearestInterval(t[0], interval),
                     getWebsiteName(t[1], level, t[2])
                 ];
-            });
+            }, interval);
 
             var series = res[0];
             var zoom = res[1];
             return {series:series, zoom:zoom, options:options};
         };
 
-        processTimeLine = function(typeData, level) {
+        processTimeLine = function(typeData, level, interval) {
             var options = {
                 yAxis: {
                     title: {
@@ -50,14 +50,14 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3], level, t[4]),
                     t[1]
                 ];
-            });
+            }, interval);
 
             var series = res[0];
             var zoom = res[1];
             return {series:series, zoom:zoom, options:options};
         };
 
-        function histogram(data, getProps) {
+        function histogram(data, getProps, interval) {
             var series = [];
             var zoom = [];
             if (data && data.length) {
@@ -73,12 +73,12 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     var amount = t[2];
 
                     if (!hist[name]) {
-                        hist[name] = [[nearestHour(time) - hourAmount, 0]];
+                        hist[name] = [[nearestInterval(time, interval) - interval, 0]];
                     }
                     if (amount) {
-                        addTimeLineEntry(hist[name], time, amount);
+                        addTimeLineEntry(hist[name], time, amount, interval);
                     } else {
-                        addEntry(hist[name], time, 1);
+                        addEntry(hist[name], time, 1, interval);
                     }
                 });
 
@@ -88,7 +88,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     var d = hist[name];
                     //add a 0 after end of data
                     var lastEntry = d[d.length-1][0];
-                    d.push([lastEntry + hourAmount, 0]);
+                    d.push([lastEntry + interval, 0]);
 
                     if (lastEntry > last) {
                         last = lastEntry;
@@ -106,22 +106,22 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             return [series, zoom];
         }
 
-        function addEntry(data, hour, amount) {
+        function addEntry(data, hour, amount, interval) {
             var pastTime = data[data.length-1][0];
             if (hour === pastTime) {
                 data[data.length-1][1] += amount;
             } else {
-                if (hour-pastTime > hourAmount) {
-                    data.push([pastTime + hourAmount, 0]);
-                    data.push([hour - hourAmount, 0]);
+                if (hour-pastTime > interval) {
+                    data.push([pastTime + interval, 0]);
+                    data.push([hour - interval, 0]);
                 }
                 data.push([hour, amount]);
             }
         }
 
-        function addTimeLineEntry(data, time, amount) {
-            var hour = nearestHour(time);
-            var nextHour = hour + hourAmount;
+        function addTimeLineEntry(data, time, amount, interval) {
+            var hour = nearestInterval(time, interval);
+            var nextHour = hour + interval;
 
             while (amount > 0) {
                 var thisAmount;
@@ -133,8 +133,8 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                 addEntry(data, hour, thisAmount);
                 amount -= thisAmount;
                 time = nextHour;
-                hour += hourAmount;
-                nextHour += hourAmount;
+                hour += interval;
+                nextHour += interval;
             }
         }
 
@@ -179,9 +179,10 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             return url;
         }
 
-        function nearestHour(utc) {
+        function nearestInterval(utc, interval) {
+            var minInterval = Math.floor(interval / minuteAmount);
             var date = new Date(utc);
-            date.setMinutes(0);
+            date.setMinutes(date.getMinutes() - (date.getMinutes() % minInterval));
             date.setSeconds(0);
             date.setMilliseconds(0);
             return +date;
@@ -192,12 +193,6 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     //start
     var getData = backgroundPage.getData;
 
-    var dataTypes = [
-        {name:"Wasting Time", key:"wasting", maxLevel:3, processData:processTimeLine},
-        {name:"Site Blocks", key:"block", maxLevel:2, processData:processRedirect}
-    ];
-    var level;
-
     //set timezone offset for all graphs
     Highcharts.setOptions({
         global: {
@@ -205,19 +200,75 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         }
     });
 
+    var dataTypes = [
+        {name:"Wasting Time", key:"wasting", maxLevel:3, processData:processTimeLine},
+        {name:"Site Blocks", key:"block", maxLevel:2, processData:processRedirect}
+    ];
+    // for now these have to evenly divide an hour
+    var frequencyOptions = [60, 30, 20, 10, 5];
+    var levels = [3, 2, 1, 0];
+    var options = {
+        type:0,
+        level:0,
+        frequency:0
+    }
+
+    function addOption(id, name, values, onChange) {
+        $(id).html(
+            values.map(
+                (f, i) => "<option value='" + i + "' " + (i === values[name] ? " selected" : "") + ">" + f + "</option>"
+            ).join()
+        ).off("change").change(function() {
+            options[name] = +this.value;
+            onChange && onChange();
+            setChart(
+                dataTypes[options.type],
+                levels[options.level],
+                frequencyOptions[options.frequency] * minuteAmount
+            );
+        });
+    }
+
+    addOption("#frequencyLevel", "frequency", frequencyOptions);
     if (dataTypes.length) {
-        var typeOptions = "";
-        for (var i = 0 ; i < dataTypes.length ; i++) {
-            var type = dataTypes[i].name;
-            typeOptions += "<option value='" + i + "'>" + type + "</option>";
-        }
-        $("#dataType").html(typeOptions).change(function() {
-            setChartType(dataTypes[this.value]);
+        addOption("#dataType", "type", dataTypes.map((d) => d.name), () => {
+            setChartType(dataTypes[options.type]);
         });
 
-        // TODO lazy loading
         setChartType(dataTypes[0]);
     }
+
+    setChart(dataTypes[options.type], levels[options.level], frequencyOptions[options.frequency] * minuteAmount);
+
+    function setChartType(type) {
+        levels = [];
+        for (var i = type.maxLevel ; i >= 0 ; i--) {
+            levels.push(i);
+        }
+        options.level = 0;
+        addOption("#nameLevel", "level", levels);
+    }
+
+    function setChart(type, level, frequency) {
+        var process = () => {
+            // TODO lazy loading
+            var res = type.processData(type.data, level, frequency);
+            setChartData(res.series, res.zoom, res.options);
+        }
+        if (type.data) {
+            process();
+        } else {
+            getData(type.key, function(items) {
+                var thisData = [];
+                Object.keys(items).sort().forEach(function(i) {
+                    thisData = thisData.concat(items[i]);
+                });
+                type.data = thisData;
+                process();
+            });
+        }
+    }
+
 
 
     //for iframe urls
@@ -360,37 +411,6 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         backgroundPage.setIframeInfo();
     }
 
-    function setChartType(type) {
-        level = type.maxLevel;
-        var levelOptions = "";
-        for (var i = 0 ; i <= level ; i++) {
-            var selected = level === i ? " selected" : "";
-            levelOptions += "<option value='" + i + "'" + selected + ">" + i + "</option>";
-        }
-        $("#nameLevel").html(levelOptions).off("change").change(function() {
-            level = parseInt(this.value);
-            getChartData(type);
-        });
-
-        if (type.data) {
-            getChartData(type);
-        } else {
-            getData(type.key, function(items) {
-                var thisData = [];
-                Object.keys(items).sort().forEach(function(i) {
-                    thisData = thisData.concat(items[i]);
-                });
-                type.data = thisData;
-                getChartData(type);
-            });
-        }
-    }
-
-    function getChartData(type) {
-        var res = type.processData(type.data, level);
-        setChartData(res.series, res.zoom, res.options);
-    }
-
     function setChartData(series, zoom, dataOptions) {
         if (series) {
             var options = {
@@ -448,6 +468,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             }
         }
     }
+
     function MinutesSecondsFormat(milli) {
         var secs = Math.floor(milli/1000);
         return Math.floor(secs/60)  + ":" + ("0" + Math.floor(secs%60)).slice(-2);
