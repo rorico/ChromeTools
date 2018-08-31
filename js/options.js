@@ -8,7 +8,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var series = histogram(typeData, (t) => {
                 return [
                     nearestInterval(t[0], interval),
-                    getWebsiteName(t[1], level, t[2])
+                    getWebsiteName(t[1], t[2], t[3], level),
                 ];
             }, interval);
 
@@ -27,7 +27,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             var series = histogram(typeData, (t) => {
                 return [
                     t[0],
-                    level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3], level, t[4]),
+                    getWebsiteName(t[3], t[4], t[2], level),
                     t[1]
                 ];
             }, interval);
@@ -122,10 +122,14 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             }
         }
 
-        function getWebsiteName(url, level, title) {
+        function getWebsiteName(url, title, wasting, level) {
             url = (typeof url === "string" ? url : "unnamed");
             var ret = url;
             switch(level) {
+                case 3:
+                    // assuming 0 wasting shouldn't be stored
+                    ret = "Wasting Level " + (wasting || "Unknown");
+                    break;
                 case 2:
                     ret = getBaseUrl(url);
                     break;
@@ -189,7 +193,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
 
     var dataTypes = [
         {name:"Wasting Time", key:"wasting", maxLevel:3, processData:processTimeLine},
-        {name:"Site Blocks", key:"block", maxLevel:2, processData:processRedirect}
+        {name:"Site Blocks", key:"block", maxLevel:3, processData:processRedirect}
     ];
     // for now these have to evenly divide an hour
     var frequencyOptions = [60, 30, 20, 10, 5];
