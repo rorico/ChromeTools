@@ -6,9 +6,6 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         var defaultZoom = 604800000; //1 week
         processRedirect = function(typeData, level) {
             var options = {
-                title: {
-                    text: null
-                },
                 yAxis: {
                     title: {
                         text: "Number of Redirects"
@@ -30,9 +27,6 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
 
         processTimeLine = function(typeData, level) {
             var options = {
-                title: {
-                    text: null
-                },
                 yAxis: {
                     title: {
                         text: "Time Spent"
@@ -400,6 +394,9 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     function setChartData(series, zoom, dataOptions) {
         if (series) {
             var options = {
+                title: {
+                    text: null
+                },
                 chart: {
                     renderTo: "highcharts",
                     zoomType: "x",
