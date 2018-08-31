@@ -53,6 +53,11 @@
   "chrome_url_overrides": {
     "newtab": "html/newTab.html"
   },
+  "icons": {
+    "16": "icons/c_16.png",
+    "48": "icons/c_48.png",
+    "128": "icons/c_128.png"
+  },
   "options_page": "html/options.html",
   "web_accessible_resources": [
     "*"
