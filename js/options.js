@@ -5,28 +5,35 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     (function() {
         var defaultZoom = 604800000; //1 week
         processRedirect = function(typeData, level, interval) {
-            var options = {
-                yAxis: {
-                    title: {
-                        text: "Number of Redirects"
-                    }
-                }
-            };
-
-            var res = histogram(typeData, (t) => {
+            var series = histogram(typeData, (t) => {
                 return [
                     nearestInterval(t[0], interval),
                     getWebsiteName(t[1], level, t[2])
                 ];
             }, interval);
 
-            var series = res[0];
-            var zoom = res[1];
-            return {series:series, zoom:zoom, options:options};
+            var options = {
+                series: series,
+                yAxis: {
+                    title: {
+                        text: "Number of Redirects"
+                    }
+                }
+            };
+            return options;
         };
 
         processTimeLine = function(typeData, level, interval) {
+            var series = histogram(typeData, (t) => {
+                return [
+                    t[0],
+                    level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3], level, t[4]),
+                    t[1]
+                ];
+            }, interval);
+
             var options = {
+                series: series,
                 yAxis: {
                     title: {
                         text: "Time Spent"
@@ -44,22 +51,12 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     }
                 }
             };
-            var res = histogram(typeData, (t) => {
-                return [
-                    t[0],
-                    level === 3 ? "Wasting Level " + t[2] : getWebsiteName(t[3], level, t[4]),
-                    t[1]
-                ];
-            }, interval);
 
-            var series = res[0];
-            var zoom = res[1];
-            return {series:series, zoom:zoom, options:options};
+            return options;
         };
 
         function histogram(data, getProps, interval) {
             var series = [];
-            var zoom = [];
             if (data && data.length) {
                 var hist = {};
                 data.map((a) => getProps(a)).sort((a, b) => {
@@ -82,28 +79,15 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     }
                 });
 
-                var last = -Infinity;
-                var first = Infinity;
                 series = Object.keys(hist).map((name) => {
                     var d = hist[name];
                     //add a 0 after end of data
                     var lastEntry = d[d.length-1][0];
                     d.push([lastEntry + interval, 0]);
-
-                    if (lastEntry > last) {
-                        last = lastEntry;
-                    }
-
-                    var firstEntry = d[0][0];
-                    if (firstEntry < first) {
-                        first = firstEntry;
-                    }
-
                     return {name:name, data:d};
                 });
-                zoom = [first < last - defaultZoom ? last - defaultZoom : first, last];
             }
-            return [series, zoom];
+            return series;
         }
 
         function addEntry(data, hour, amount, interval) {
@@ -200,6 +184,9 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         }
     });
 
+    // maintain zoom between different graphs
+    var zoom = [,];
+
     var dataTypes = [
         {name:"Wasting Time", key:"wasting", maxLevel:3, processData:processTimeLine},
         {name:"Site Blocks", key:"block", maxLevel:2, processData:processRedirect}
@@ -252,8 +239,8 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     function setChart(type, level, frequency) {
         var process = () => {
             // TODO lazy loading
-            var res = type.processData(type.data, level, frequency);
-            setChartData(res.series, res.zoom, res.options);
+            var options = type.processData(type.data, level, frequency);
+            setChartData(options);
         }
         if (type.data) {
             process();
@@ -411,61 +398,63 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         backgroundPage.setIframeInfo();
     }
 
-    function setChartData(series, zoom, dataOptions) {
-        if (series) {
-            var options = {
-                title: {
-                    text: null
-                },
-                chart: {
-                    renderTo: "highcharts",
-                    zoomType: "x",
-                    type: "column"
-                },
-                xAxis:{
-                    type: "datetime"
-                },
-                series: series,
-                plotOptions: {
-                    area: {
-                        fillColor: {
-                            linearGradient: {
-                                x1: 0,
-                                y1: 0,
-                                x2: 0,
-                                y2: 1
-                            },
-                            stops: [
-                                [0, Highcharts.getOptions().colors[0]],
-                                [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get("rgba")]
-                            ]
-                        },
-                        marker: {
-                            radius: 2
-                        },
-                        lineWidth: 1,
-                        states: {
-                            hover: {
-                                lineWidth: 1
-                            }
-                        },
-                        threshold: null
-                    },
-                    column: {
-                        stacking: "normal",
-                        pointPadding: 0,
-                        borderWidth: 0
+    function setChartData(dataOptions) {
+        var options = {
+            title: {
+                text: null
+            },
+            chart: {
+                renderTo: "highcharts",
+                zoomType: "x",
+                type: "column"
+            },
+            xAxis:{
+                type: "datetime",
+                events: {
+                    setExtremes: (e) => {
+                        zoom = [e.min, e.max];
                     }
                 }
-            };
-            for (var option in dataOptions) {
-                options[option] = dataOptions[option];
+            },
+            plotOptions: {
+                area: {
+                    fillColor: {
+                        linearGradient: {
+                            x1: 0,
+                            y1: 0,
+                            x2: 0,
+                            y2: 1
+                        },
+                        stops: [
+                            [0, Highcharts.getOptions().colors[0]],
+                            [1, Highcharts.Color(Highcharts.getOptions().colors[0]).setOpacity(0).get("rgba")]
+                        ]
+                    },
+                    marker: {
+                        radius: 2
+                    },
+                    lineWidth: 1,
+                    states: {
+                        hover: {
+                            lineWidth: 1
+                        }
+                    },
+                    threshold: null
+                },
+                column: {
+                    stacking: "normal",
+                    pointPadding: 0,
+                    borderWidth: 0
+                }
             }
-            var chart = new Highcharts.Chart(options);
-            if (zoom) {
-                chart.xAxis[0].setExtremes(zoom[0], zoom[1]);
-                chart.showResetZoom();
-            }
+        };
+        for (var option in dataOptions) {
+            options[option] = dataOptions[option];
+        }
+        var chart = new Highcharts.Chart(options);
+        if (zoom[0] && zoom[1]) {
+            chart.xAxis[0].setExtremes(zoom[0], zoom[1], true, false);
+            chart.showResetZoom();
         }
     }
 
