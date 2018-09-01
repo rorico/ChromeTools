@@ -317,7 +317,7 @@ var isBlocked;
 
     function handleBackgroundPage(newUrl, newTitle, incognito, window) {
         var result = updateWindow(newUrl, newTitle, incognito, window, windows[window].tab);
-        if (result.wasting !== wastingTime) {
+        if (result.wasting !== wastingTime || result.url !== url || result.title !== title) {
             // refresh
             handleNewPage(windows[windowId].url, windows[windowId].title);
         }
