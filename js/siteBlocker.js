@@ -209,18 +209,21 @@ var isBlocked;
             }
         }
 
-        if (tabId === id && changeInfo) {
+        if (windows[tab.windowId].tab === id && changeInfo) {
+            var thisWindow = tab.windowId === windowId;
             if (changeInfo.status === "loading") {
-                handleNewTab(tab);
+                if (thisWindow) {
+                    handleNewTab(tab);
+                } else {
+                    handleBackgroundTab(tab);
+                }
             } else if (changeInfo.title) {
                 //this should be consistent with handleNewTab
                 //want to change, but this is simpler for now
-                if (windows[windowId].tab === id) {
-                    var newTitle = tab.incognito ? "incognito" : changeInfo.title;
-                    windows[windowId].title = newTitle;
-                    if (windows[windowId].url === url) {
-                        title = newTitle;
-                    }
+                var newTitle = tab.incognito ? "incognito" : changeInfo.title;
+                windows[windowId].title = newTitle;
+                if (thisWindow) {
+                    title = newTitle;
                 }
             }
         }
@@ -262,6 +265,11 @@ var isBlocked;
     //just a wrapper for handleNewPage
     function handleNewTab(tab) {
         handleNewPage(tab.url, tab.title, tab.incognito);
+    }
+
+    //just a wrapper for handleBackgroundPage
+    function handleBackgroundTab(tab) {
+        handleBackgroundPage(tab.url, tab.title, tab.incognito, tab.windowId);
     }
 
     function handleNewPage(newUrl, newTitle, incognito) {
