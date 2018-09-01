@@ -293,7 +293,7 @@ var isBlocked;
         //handle new page
         startTime = new Date();     //consider converting to integer right here
 
-        var result = updateWindow(newUrl, newTitle, incognito, windowId, tabId);
+        var result = updateWindow(newUrl, newTitle, incognito, windowId, tabId, startTime);
         url = result.url;
         title = result.title;
         wastingTime = result.wasting;
@@ -318,14 +318,14 @@ var isBlocked;
 
 
     function handleBackgroundPage(newUrl, newTitle, incognito, window) {
-        var result = updateWindow(newUrl, newTitle, incognito, window, windows[window].tab);
+        var result = updateWindow(newUrl, newTitle, incognito, window, windows[window].tab, new Date());
         if (result.wasting !== wastingTime || result.url !== url || result.title !== title) {
             // refresh
             handleNewPage(windows[windowId].url, windows[windowId].title);
         }
     }
 
-    function updateWindow(newUrl, newTitle, incognito, windowId, tab) {
+    function updateWindow(newUrl, newTitle, incognito, windowId, tab, time) {
         //TODO, make incognito a setting
         var url = incognito ? "incognito" : newUrl;
         var title = incognito ? "incognito" : newTitle;
@@ -336,7 +336,8 @@ var isBlocked;
             title: title,
             url: url,
             tab: tabId,
-            window: windowId
+            window: windowId,
+            startTime: time
         };
         for (var w in windows) {
             // lower wasting time is higher priority, but 0 is lowest, might was to reverse order
@@ -553,16 +554,18 @@ var isBlocked;
                     time = settings.tolerance;
                 }
                 // auto finish
-                if (!oneTab && time + +new Date() - startTime > settings.VIPlength + settings.tolerance) {
+                if (!oneTab) {
+                    var now = +new Date();
+                    var check = (start) => time + now - start > settings.VIPlength + settings.tolerance;
                     var tab = -1;
                     // finish the focused one
-                    if (windows[windowId].wasting === 2 && windows[windowId].url === url) {
+                    if (windows[windowId].wasting === 2 && check(startTime)) {
                         tab = tabId;
                         tabs = tabs.filter((w) => w.tab !== tabId);
                     } else {
                         // if not focused, pick one
                         tabs.some((b, i) => {
-                            if (b.wasting === 2) {
+                            if (b.wasting === 2 && check(b.startTime)) {
                                 tab = b.tab;
                                 tabs.splice(i, 1);
                                 return true;
