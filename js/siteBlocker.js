@@ -222,7 +222,9 @@ var isBlocked;
                 //want to change, but this is simpler for now
                 var newTitle = tab.incognito ? "incognito" : changeInfo.title;
                 windows[windowId].title = newTitle;
-                if (thisWindow) {
+                // need to do this incase current information is being overwritten due to wasting
+                // this assumes that updating title happens with no change in url
+                if (thisWindow || windows[windowId].url === url) {
                     title = newTitle;
                 }
             }
