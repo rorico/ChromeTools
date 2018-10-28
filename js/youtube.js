@@ -22,9 +22,8 @@ var youtubeVideoNames = [];
     //inject youtube script into all youtube tabs
     //mostly for development, any tab opened after extension loaded should have it already
     youtubeTabs(function(tabs) {
-        for (var i = 0 ; i < tabs.length ; i++) {
-            chrome.tabs.executeScript(tabs[i].id, {file:scriptUrl});
-        }
+        // getState injects if not already
+        tabs.map(tab => tab.id).forEach(getState);
     });
 
     function youtubeTabs(callback) {
@@ -63,29 +62,29 @@ var youtubeVideoNames = [];
                 }
             });
         });
+    }
 
-        function getState(id, repeat) {
-            return new Promise(function(resolve, reject) {
-                var data = {action:"getState"};
-                chrome.tabs.sendMessage(id, data, function(state) {
-                    //script missing from the tab, inject
-                    if (state === undefined && !repeat) {
-                        chrome.tabs.executeScript(id, {file:scriptUrl}, function() {
-                            if (chrome.runtime.lastError) {
-                                //something went wrong here, don't try again, just move on
-                                log(chrome.runtime.lastError);
-                                reject();
-                            } else {
-                                //make sure not to get in infinite loop
-                                resolve(getState(id, true));
-                            }
-                        });
-                    } else {
-                        resolve(state);
-                    }
-                });
+    function getState(id, repeat) {
+        return new Promise(function(resolve, reject) {
+            var data = {action:"getState"};
+            chrome.tabs.sendMessage(id, data, function(state) {
+                //script missing from the tab, inject
+                if (state === undefined && !repeat) {
+                    chrome.tabs.executeScript(id, {file:scriptUrl}, function() {
+                        if (chrome.runtime.lastError) {
+                            //something went wrong here, don't try again, just move on
+                            log(chrome.runtime.lastError);
+                            reject();
+                        } else {
+                            //make sure not to get in infinite loop
+                            resolve(getState(id, true));
+                        }
+                    });
+                } else {
+                    resolve(state);
+                }
             });
-        }
+        });
     }
 
     function youtubePlay(index) {
