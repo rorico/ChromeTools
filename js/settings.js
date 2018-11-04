@@ -2,10 +2,12 @@ var settings = {};
 var getSetting;
 var updateSetting;
 var updateSettings;
+var onSettingLoad;
 var defaults = {};
 var userSettings = {};
 (function() {
     var listeners = {};
+    var onload = {};
     var settingName = "settings";
     setSettings();
 
@@ -16,6 +18,7 @@ var userSettings = {};
             }
             if (items.settings) {
                 updateSettings(items.settings);
+                updateOnLoads(items.settings);
             }
         });
     }
@@ -59,6 +62,23 @@ var userSettings = {};
             settings[setting] = val;
         }
     };
+
+    onSettingLoad = function(setting, onchange) {
+        if (!onload[setting]) {
+            onload[setting] = [];
+        }
+        onload[setting].push(onchange);
+    };
+
+    function updateOnLoads(settings) {
+        // since this is called after updateSettings, defaults should be loaded in
+        for (var set in onload) {
+            onload[set].forEach((c) => {
+                c(settings[set]);
+            });
+        }
+    };
+
 
     function updateListeners(setting, val) {
         if (listeners[setting]) {
