@@ -10,8 +10,11 @@ var noBlocks = [];
 var getWasteStreak;
 
 //functions
-var isBlocked;
+var isBlocked = () => false;
 
+addDefault("siteBlockerEnabled", true, "bool");
+onSettingLoad("siteBlockerEnabled", (e) => {
+    if (!e) return;
 (function(){
     var tabId = -2;
     var windowId = -3;
@@ -953,3 +956,4 @@ var isBlocked;
         noBlockReminder();
     }
 })();
+});
