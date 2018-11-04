@@ -278,7 +278,6 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
     var settings = backgroundPage.settings;
     var userSettings = backgroundPage.userSettings;
 
-
     var $settings = $("#settings");
     for (var u in userSettings) {
         $settings.append(settingRow(u, userSettings[u]));
@@ -297,7 +296,7 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
         html += "</select>";
         var select = $(html);
         ele.append(select);
-        var input = $("<input type='text' class='val'" + (val ? " value='" + JSON.stringify(val) + "'" : "") + ">");
+        var input = $("<input type='text' class='val'" + (val !== undefined ? " value='" + JSON.stringify(val) + "'" : "") + ">");
         ele.append(input);
         var notEmpty = () => {
             var del = $("<input type='button' class='del' value='&#10006;'>");
@@ -347,6 +346,9 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
                     case "json":
                     cast = JSON.parse(val);
                     break;
+                    case "bool":
+                    cast = checkBoolean(val);
+                    break;
                     default:
                     cast = val;
                     break;
@@ -355,6 +357,12 @@ chrome.runtime.getBackgroundPage(function(backgroundPage) {
             }
         });
         backgroundPage.updateSettings(set);
+        function checkBoolean(str) {
+            console.log(str)
+            if (!str || !str.length || str === "0" || str.toLowerCase() === "false")
+                return false;
+            return true;
+        }
     });
 
     function liveChange(baseId, data, parser, submitCallback) {
