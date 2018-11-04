@@ -46,7 +46,7 @@ var userSettings = {};
         // copy array, settings will be changed later
         userSettings = JSON.parse(JSON.stringify(newSettings));
         for (var d in defaults) {
-            if (!settings[d]) {
+            if (settings[d] === undefined) {
                 settings[d] = defaults[d][0];
             }
         }
