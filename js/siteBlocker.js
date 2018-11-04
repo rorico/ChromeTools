@@ -66,6 +66,7 @@ var isBlocked;
 
     addMessageListener({
         "VIP": () => {
+            VIP();
         },
         "finish": () => {
             finish();
