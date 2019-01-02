@@ -74,7 +74,8 @@ var youtubeVideoNames = [];
                         if (chrome.runtime.lastError) {
                             //something went wrong here, don't try again, just move on
                             log(chrome.runtime.lastError);
-                            reject();
+                            // resolve so that Promises.all doesn't reject, empty response
+                            resolve();
                         } else {
                             //make sure not to get in infinite loop
                             resolve(getState(id, true));
