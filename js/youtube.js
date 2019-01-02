@@ -37,17 +37,15 @@ var youtubeVideoNames = [];
         chrome.tabs.query(query, callback);
     }
 
-    function youtube(index) {
+    function youtube(key) {
         youtubeTabs((tabs) => {
-            var cnt = 0;
-            var num = tabs.length;
             Promise.all(tabs.map((tab) => getState(tab.id))).then((states) => {
                 var playing = tabs.filter((tab, i) => states[i] === "play");
-                if (index === "K".charCodeAt(0)) {
+                if (key === "K".charCodeAt(0)) {
                     if (playing.length) {
                         emptyList();
                         playing.forEach((t) => {
-                            chrome.tabs.sendMessage(t.id, sendFormat("key", index));
+                            chrome.tabs.sendMessage(t.id, sendFormat("key", key));
                             addTab(t.id, t.title);
                         });
                         sendRequest("youtube");
@@ -58,18 +56,18 @@ var youtubeVideoNames = [];
                         playCurrent(playing);
                     }
                 } else {
-                    playing.forEach((t) => chrome.tabs.sendMessage(t.id, sendFormat("key", index)));
+                    playing.forEach((t) => chrome.tabs.sendMessage(t.id, sendFormat("key", key)));
                 }
             });
         });
     }
 
-    function getState(id, repeat) {
+    function getState(id, repeated) {
         return new Promise(function(resolve, reject) {
             var data = {action:"getState"};
             chrome.tabs.sendMessage(id, data, function(state) {
                 //script missing from the tab, inject
-                if (state === undefined && !repeat) {
+                if (state === undefined && !repeated) {
                     chrome.tabs.executeScript(id, {file:scriptUrl}, function() {
                         if (chrome.runtime.lastError) {
                             //something went wrong here, don't try again, just move on
