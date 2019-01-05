@@ -12,10 +12,12 @@ var userSettings = {};
     setSettings();
 
     function setSettings() {
+        console.log('Getting Settings...')
         chrome.storage.sync.get(settingName, (items) => {
             if (chrome.runtime.lastError) {
                 log(chrome.runtime.lastError);
             }
+            console.log('Got Settings:', items)
             if (items.settings) {
                 updateSettings(items.settings);
                 updateOnLoads(items.settings);
