@@ -98,7 +98,7 @@ function init(type, info) {
 }
 
 function unblock() {
-    $("#" + blockId).removeClass("display").blur();
+    blockScreen.removeClass("display").blur();
     if (oldFocus) {
         oldFocus.focus();
     }
