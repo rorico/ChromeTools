@@ -10,9 +10,6 @@ var userSettings = {};
     var onload = {};
     var settingName = "settings";
     setSettings();
-    setTimeout(() => {
-        setSettings()
-    })
 
     function setSettings() {
         console.log('Getting Settings...')
@@ -20,7 +17,7 @@ var userSettings = {};
             if (chrome.runtime.lastError) {
                 log(chrome.runtime.lastError);
             }
-            console.log('Got Settings:', items)
+            console.log('Got Settings:', JSON.stringify(items.settings))
             if (items.settings) {
                 updateSettings(items.settings);
                 updateOnLoads(items.settings);
