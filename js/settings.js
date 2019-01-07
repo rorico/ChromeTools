@@ -10,6 +10,9 @@ var userSettings = {};
     var onload = {};
     var settingName = "settings";
     setSettings();
+    setTimeout(() => {
+        setSettings()
+    })
 
     function setSettings() {
         console.log('Getting Settings...')
