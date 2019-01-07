@@ -40,7 +40,7 @@ function parseSchedule(text) {
                 currentInfo = [];
             }
             type = line;
-        } else if (/^[MTWTFh]{1, 6} \d{1, 2}:.+$/.test(lines[i])) {
+        } else if (/^[MTWTFh]{1,6} \d{1,2}:.+$/.test(lines[i])) {
             currentInfo.push([
                 // classrooms have random spaces
                 lines[i+1].replace(/ +/g, " "),
