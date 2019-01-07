@@ -62,7 +62,7 @@ var userSettings = {};
 
     addDefault = function(setting, val, type, display) {
         defaults[setting] = [val, type, display || setting];
-        if (settings[setting] != val) {
+        if (settings[setting] === undefined) {
             updateListeners(settings[setting], val);
             settings[setting] = val;
         }
