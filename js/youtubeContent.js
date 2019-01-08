@@ -25,7 +25,7 @@ function youtubeNewPage() {
 }
 
 function skipAd() {
-    var adSkip = document.getElementsByClassName("videoAdUiSkipButton")[0];
+    var adSkip = document.getElementsByClassName("ytp-ad-skip-button-container")[0];
     if (adSkip) {
         adSkip.click();
         return true;
