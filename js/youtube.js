@@ -1,6 +1,8 @@
 var youtubeVideoNames = [];
 
-(function() {
+addDefault("youtubeEnabled", true, "bool");
+onSettingLoad("youtubeEnabled", (e) => {
+    if (!e) return;
     var youtubeVideoIds = [];
     var scriptUrl = "/js/youtubeContent.js";
 
@@ -155,4 +157,4 @@ var youtubeVideoNames = [];
             youtubeVideoIds.ended = true;
         }
     }
-})();
+});
