@@ -49,6 +49,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
     addDefault("tolerance", 2000, "int"); // 2s
     addDefault("quickTabTime", 400, "int"); // 0.4s
     addDefault("minChange", 1200000, "int"); // 20 mins
+    addDefault("startingZero", false, "bool"); // 20 mins
     if (0) { // if in testing mode
         addDefault("timeLineLength", 120000, "int"); // 2 mins
         addDefault("startingTimeLeft", 60000, "int"); // 1 mins
@@ -175,6 +176,13 @@ onSettingLoad("siteBlockerEnabled", (e) => {
     }
 
     function startTimeLine() {
+        if (settings.startingZero) {
+            // assume this is set before this is called
+            startTime -= settings.startingTimeLeft
+            wastingTime = 2;
+            url = "starting";
+            title = "starting";
+        }
         chrome.tabs.query({active:true}, function(tabs) {
             // just to get variables set properly, can do this more efficiently
             var newTab = (tab) => {
@@ -288,10 +296,13 @@ onSettingLoad("siteBlockerEnabled", (e) => {
         modifyTimeLine("add", newest);
         if (wastingTime) {
             changeTimeLeft(-timeSpent);
-            //don't want to slow down event handler
-            setTimeout(function() {
-                storeData("wasting", newest);
-            }, 0);
+            // don't include hack to start at 0
+            if (url === "starting") {
+                //don't want to slow down event handler
+                setTimeout(function() {
+                    storeData("wasting", newest);
+                }, 0);
+            }
         }
         //handle new page
         startTime = new Date();     //consider converting to integer right here
