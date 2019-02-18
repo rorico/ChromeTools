@@ -9,6 +9,7 @@ var userSettings = {};
     var listeners = {};
     var onload = {};
     var settingName = "settings";
+    var loaded = false;
     setSettings();
 
     function setSettings() {
@@ -17,6 +18,7 @@ var userSettings = {};
             if (chrome.runtime.lastError) {
                 log(chrome.runtime.lastError);
             }
+            loaded = true;
             console.log('Got Settings:', JSON.stringify(items.settings))
             if (items.settings) {
                 updateSettings(items.settings);
@@ -62,6 +64,9 @@ var userSettings = {};
         if (settings[setting] === undefined) {
             updateListeners(settings[setting], val);
             settings[setting] = val;
+            if (loaded) {
+                updateOnLoad(setting)
+            }
         }
     };
 
@@ -70,11 +75,22 @@ var userSettings = {};
             onload[setting] = [];
         }
         onload[setting].push(onchange);
+        if (loaded) {
+            onchange(settings[setting])
+        }
     };
 
     function updateOnLoads(settings) {
         // since this is called after updateSettings, defaults should be loaded in
         for (var set in onload) {
+            onload[set].forEach((c) => {
+                c(settings[set]);
+            });
+        }
+    };
+
+    function updateOnLoad(set) {
+        if (onload[set]) {
             onload[set].forEach((c) => {
                 c(settings[set]);
             });
