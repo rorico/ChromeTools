@@ -297,7 +297,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
         if (wastingTime) {
             changeTimeLeft(-timeSpent);
             // don't include hack to start at 0
-            if (url === "starting") {
+            if (url !== "starting") {
                 //don't want to slow down event handler
                 setTimeout(function() {
                     storeData("wasting", newest);
