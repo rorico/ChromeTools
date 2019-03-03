@@ -903,7 +903,6 @@ onSettingLoad("siteBlockerEnabled", (e) => {
     }
 
     function tempVIP() {
-        wasteStreak++;
         //so that you can't auto finish from temps
         handleNewPage(url, title);
         makeTabVIP();
