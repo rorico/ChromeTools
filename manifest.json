@@ -37,6 +37,12 @@
         "default": "Alt+T"
       },
       "description": "Open Options"
+    },
+    "open_wasting": {
+      "suggested_key": {
+        "default": "Alt+Y"
+      },
+      "description": "Opens Wasting Time Page"
     }
   },
   "content_scripts": [

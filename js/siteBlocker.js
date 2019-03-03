@@ -1,3 +1,5 @@
+// use by shortcuts, is a constant
+var wastingUrl = chrome.extension.getURL("/html/wasting.html")
 //set global variables, these are likely used by browserAction
 var startTime = new Date();
 var wastingTime = 0;
@@ -370,6 +372,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
 
     //checks all levels and returns the level of url if matched, 0 if none
     function matchesURL(url) {
+        if (url === wastingUrl) return 1
         for (var lvl = 0 ; lvl < settings.blockUrls.length ; lvl++) {
             for (var i = 0 ; i < settings.blockUrls[lvl].length ; i++) {
                 if (new RegExp("^" + settings.blockUrls[lvl][i].replace(/\./g, "\\.").replace(/\*/g, ".*") + "$").test(url)) {

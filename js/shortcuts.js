@@ -6,5 +6,9 @@ chrome.commands.onCommand.addListener(function(command) {
         case "open_options":
             window.open(chrome.extension.getURL("/html/options.html"));
             break;
+        case "open_wasting":
+        	// from siteBlocker
+            window.open(wastingUrl);
+            break;
     }
 });
