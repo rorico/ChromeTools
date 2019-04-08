@@ -24,8 +24,7 @@ onSettingLoad("youtubeEnabled", (e) => {
     //inject youtube script into all youtube tabs
     //mostly for development, any tab opened after extension loaded should have it already
     youtubeTabs(function(tabs) {
-        // getState injects if not already
-        tabs.map(tab => tab.id).forEach((t) => getState(t));
+        tabs.map(tab => tab.id).forEach(inject);
     }, true);
 
     function youtubeTabs(callback, self) {
@@ -37,6 +36,20 @@ onSettingLoad("youtubeEnabled", (e) => {
             query.active = false;
         }
         chrome.tabs.query(query, callback);
+    }
+
+    function inject(id) {
+        return new Promise((resolve, reject) => {
+            chrome.tabs.executeScript(id, {file:scriptUrl}, function() {
+                if (chrome.runtime.lastError) {
+                    //something went wrong here, don't try again, just move on
+                    log(chrome.runtime.lastError);
+                    reject();
+                } else {
+                    resolve();
+                }
+            });
+        });
     }
 
     function youtube(key) {
@@ -64,27 +77,10 @@ onSettingLoad("youtubeEnabled", (e) => {
         });
     }
 
-    function getState(id, repeated) {
+    function getState(id) {
         return new Promise(function(resolve, reject) {
             var data = {action:"getState"};
-            chrome.tabs.sendMessage(id, data, function(state) {
-                //script missing from the tab, inject
-                if (state === undefined && !repeated) {
-                    chrome.tabs.executeScript(id, {file:scriptUrl}, function() {
-                        if (chrome.runtime.lastError) {
-                            //something went wrong here, don't try again, just move on
-                            log(chrome.runtime.lastError);
-                            // resolve so that Promises.all doesn't reject, empty response
-                            resolve();
-                        } else {
-                            //make sure not to get in infinite loop
-                            resolve(getState(id, true));
-                        }
-                    });
-                } else {
-                    resolve(state);
-                }
-            });
+            chrome.tabs.sendMessage(id, data, resolve);
         });
     }
 
