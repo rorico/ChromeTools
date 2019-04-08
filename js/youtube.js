@@ -100,7 +100,10 @@ onSettingLoad("youtubeEnabled", (e) => {
 
     function addTab(id, title) {
         //remove ending - YouTube
-        title = title.substr(0, title.lastIndexOf(" - YouTube"));
+        var index = title.lastIndexOf(" - YouTube");
+        if (index !== -1) {
+            title = title.substr(0, index);
+        }
         youtubeVideoIds.push(id);
         youtubeVideoNames.push(title);
         chrome.tabs.sendMessage(id, {action:"listen"}, () => {
