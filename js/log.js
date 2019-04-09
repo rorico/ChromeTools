@@ -4,6 +4,9 @@ var numUnread = 0;
 addMessageListener({
     "removeLog": function(a) {
         removeLog(a.input);
+    },
+    "log": function(a) {
+        log(a.input);
     }
 });
 
