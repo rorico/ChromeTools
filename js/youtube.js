@@ -22,9 +22,9 @@ onSettingLoad("youtubeEnabled", (e) => {
 
     //inject youtube script into all youtube tabs
     //mostly for development, any tab opened after extension loaded should have it already
-    youtubeTabs(function(tabs) {
-        tabs.map(tab => tab.id).forEach(inject);
-    }, true);
+    // youtubeTabs(function(tabs) {
+    //     tabs.map(tab => tab.id).forEach(inject);
+    // }, true);
 
     function youtubeTabs(callback, self) {
         //get all youtube tabs that isn't the current one
