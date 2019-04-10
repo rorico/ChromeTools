@@ -41,7 +41,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     var youtubeButton;
     youtubeDisplay();
     addPhrases([
-        ["P", () => {
+        ["Q", () => {
             // youtubeButton can change
             youtubeButton.toggle();
         }]
