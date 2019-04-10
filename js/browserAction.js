@@ -35,12 +35,27 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     addNumberListener(function(num) {
         removeAlarm(num - 1);  //0 index
     }, "D");
-    addNumberListener(changeTimer);
 
     alertLogs();
 
     var youtubeButton;
     youtubeDisplay();
+    addPhrases([
+        ["P", () => {
+            // youtubeButton can change
+            youtubeButton.toggle();
+        }]
+    ])
+
+    addNumberListener((num) => {
+        if (youtubeButton.state === 2) {
+            // 0 index
+            youtubeButton.click(num - 1);
+        } else {
+            changeTimer(num);
+        }
+    });
+
 
     //automatically close window after a period of time
     //due to alt tabbing out of game to close alarm multiple times and expecting it not to be open
@@ -66,13 +81,15 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     close();
 
     //list entries in format [ele, enable] or ele, depending on enable
-    function topButton(list, symbol, side, enable, clickCallback) {
+    function topButton(list, symbol, side, enable, clickCallback, getDisplay) {
         var obj = {
             list:list,
             cnt:0,
             state:1,
             destructor:destructor,
-            restart:fullDisplay
+            restart:fullDisplay,
+            toggle:toggle,
+            click:click
         };
         var cls = "";
         if (side === "right") {
@@ -98,8 +115,8 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
         return obj;
 
         function fullDisplay() {
+            button.empty()
             obj.state = 2;
-            var allEle = $("<div></div>");
             obj.cnt = 0;
             for (var i = 0 ; i < obj.list.length ; i++) {
                 var info;
@@ -112,13 +129,17 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
                 } else {
                     info = obj.list[i];
                 }
-                var ele = $("<div class='log block'>" + info + "</div>");
-                setClick(ele, i);
-                allEle.append(ele);
+                var index = i;
+                if (getDisplay) {
+                    // kinda ghetto, but unlikely to add more buttons
+                    [info, index] = getDisplay(info);
+                }
+                var ele = $("<div class='log block' value='" + index + "'>" + info + "</div>");
+                setClick(ele);
+                button.append(ele);
                 obj.cnt++;
             }
-            button.html(allEle);
-            //20 is 2 * margin
+            // 20 is 2 * margin
             button.outerWidth($("body").width() - 20);
         }
 
@@ -128,16 +149,34 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
             button.width(button.height());
         }
 
-        function setClick(ele, i) {
-            ele.click(function(e){
-                e.stopPropagation();
-                clickCallback(i);
-                this.remove();
+        function toggle() {
+            if (obj.state === 2) {
+                closeDisplay();
+            } else {
+                fullDisplay();
+            }
+        }
+
+        function setClick(ele) {
+            var click = function(e) {
+                if (e) e.stopPropagation();
+                // needs to be int
+                clickCallback(+ele.attr("value"));
+                ele.remove();
                 obj.cnt--;
                 if (!obj.cnt) {
                     destructor();
                 }
-            });
+            }
+            ele.click(click);
+        }
+
+        function click(i) {
+            var c = button.children();
+            console.log(c)
+            if (i < c.length) {
+                c[i].click();
+            }
         }
 
         function destructor() {
@@ -157,10 +196,10 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     }
 
     function youtubeDisplay() {
-        var youtube = background.youtubeVideoNames;
+        var queue = background.youtubeQueue;
         if (youtubeButton && youtubeButton.state !== 0) {
-            youtubeButton.list = youtube;
-            if (youtube.length) {
+            youtubeButton.list = queue;
+            if (queue.length) {
                 if (youtubeButton.state === 2) {
                     youtubeButton.restart();
                 }
@@ -169,11 +208,11 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
                 youtubeButton = null;
             }
         } else {
-            if (youtube.length) {
+            if (queue.length) {
                 //play symbol, may want to change
-                youtubeButton = topButton(youtube, "&#9658;", "right", false, function(index) {
-                    sendRequest("youtubePlay", index);
-                });
+                youtubeButton = topButton(queue, "&#9658;", "right", false, function(id) {
+                    sendRequest("youtubePlay", id);
+                }, (item) => [item.title, item.id]);
             }
         }
     }

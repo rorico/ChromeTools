@@ -1,9 +1,8 @@
-var youtubeVideoNames = [];
+var youtubeQueue = [];
 
 addDefault("youtubeEnabled", true, "bool");
 onSettingLoad("youtubeEnabled", (e) => {
     if (!e) return;
-    var youtubeVideoIds = [];
     var scriptUrl = "/js/youtubeContent.js";
 
     addMessageListener({
@@ -58,14 +57,13 @@ onSettingLoad("youtubeEnabled", (e) => {
                 var playing = tabs.filter((tab, i) => states[i] === "play");
                 if (key === "K".charCodeAt(0)) {
                     if (playing.length) {
-                        emptyList();
                         playing.forEach((t) => {
                             chrome.tabs.sendMessage(t.id, sendFormat("key", key));
-                            addTab(t.id, t.title);
+                            addTab(t.id, t.title, 1);
                         });
                         sendRequest("youtube");
-                    } else if (youtubeVideoIds.length) {
-                        playAll();
+                    } else if (youtubeQueue.length) {
+                        playFirst();
                         sendRequest("youtube");
                     } else if (isBlocked()) {
                         playCurrent(playing);
@@ -84,9 +82,13 @@ onSettingLoad("youtubeEnabled", (e) => {
         });
     }
 
-    function youtubePlay(index) {
-        play(youtubeVideoIds.splice(index, 1)[0]);
-        youtubeVideoNames.splice(index, 1);
+    function youtubePlay(id) {
+        youtubeQueue.some((y, i) => {
+            if (y.id === id) {
+                play(youtubeQueue.splice(i, 1)[0].id);
+                return true;
+            }
+        });
     }
 
     function skipAd() {
@@ -98,37 +100,45 @@ onSettingLoad("youtubeEnabled", (e) => {
         });
     }
 
-    function addTab(id, title) {
+    function addTab(id, title, top) {
         //remove ending - YouTube
         var index = title.lastIndexOf(" - YouTube");
         if (index !== -1) {
             title = title.substr(0, index);
         }
-        youtubeVideoIds.push(id);
-        youtubeVideoNames.push(title);
+        var y = {
+            id: id,
+            title: title
+        }
+        if (top) {
+            youtubeQueue.unshift(y);
+        } else {
+            youtubeQueue.push(y);
+        }
         chrome.tabs.sendMessage(id, {action:"listen"}, () => {
-            if (youtubeVideoIds.length === 1 && youtubeVideoIds[0] === id) {
-                emptyList();
-            } else {
-                youtubeVideoIds.some((vId, i) => {
-                    if (vId === id) {
-                        youtubeVideoIds.splice(i, 1);
-                        youtubeVideoNames.splice(i, 1);
-                        return true;
-                    }
-                });
-            }
+            youtubeQueue.some((y, i) => {
+                if (y.id === id) {
+                    youtubeQueue.splice(i, 1);
+                    return true;
+                }
+            });
+            // not updating browserAction as its hard to start a song while its open
         });
     }
 
     function emptyList() {
-        youtubeVideoIds = [];
-        youtubeVideoNames = [];
+        youtubeQueue = [];
+    }
+
+    function playFirst() {
+        if (youtubeQueue.length) {
+            play(youtubeQueue.shift().id);
+        }
     }
 
     function playAll() {
-        for (var i = 0 ; i < youtubeVideoIds.length ; i++) {
-            play(youtubeVideoIds[i]);
+        for (var y of youtubeQueue) {
+            play(y.id);
         }
         emptyList();
     }
@@ -146,14 +156,10 @@ onSettingLoad("youtubeEnabled", (e) => {
         chrome.tabs.sendMessage(tabId, sendFormat("key", "K".charCodeAt(0)));
     }
 
+
     function youtubeEnd(tab) {
-        //add to list only if empty, or thing before was added this way
-        //property that gets overwritten when array is restarted
-        if (youtubeVideoIds.ended || !youtubeVideoIds.length) {
-            emptyList();
-            addTab(tab.id, tab.title);
-            sendRequest("youtube");
-            youtubeVideoIds.ended = true;
-        }
+        // add to end of list
+        addTab(tab.id, tab.title);
+        sendRequest("youtube");
     }
 });
