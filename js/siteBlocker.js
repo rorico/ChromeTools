@@ -51,7 +51,8 @@ onSettingLoad("siteBlockerEnabled", (e) => {
     addDefault("tolerance", 2000, "int"); // 2s
     addDefault("quickTabTime", 400, "int"); // 0.4s
     addDefault("minChange", 1200000, "int"); // 20 mins
-    addDefault("startingZero", false, "bool"); // 20 mins
+    addDefault("startingZero", false, "bool");
+    addDefault("afkRestart", false, "bool");
     if (0) { // if in testing mode
         addDefault("timeLineLength", 120000, "int"); // 2 mins
         addDefault("startingTimeLeft", 60000, "int"); // 1 mins
@@ -305,6 +306,11 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                     storeData("wasting", newest);
                 }, 0);
             }
+        }
+        if (settings.afkRestart && timeSpent > settings.timeLineLength) {
+            setTimeout(() => {
+                resetTime();
+            });
         }
         //handle new page
         startTime = new Date();     //consider converting to integer right here
