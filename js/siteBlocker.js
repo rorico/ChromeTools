@@ -194,10 +194,11 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                 handleNewTab(tab);
             };
             tabs.forEach(newTab);
-            // can run these simutaneous, but too lazy
+            // can run these simultaneous, but too lazy
             chrome.windows.getCurrent((window) => {
+                windowId = window.windowId;
                 tabs.forEach((tab) => {
-                    if (tab.windowId === window.windowId) {
+                    if (tab.windowId === windowId) {
                         newTab(tab);
                     }
                 });
@@ -206,7 +207,15 @@ onSettingLoad("siteBlockerEnabled", (e) => {
     }
 
     chrome.tabs.onActivated.addListener(function(activeInfo) {
-        tabId = activeInfo.tabId;
+        var window = activeInfo.windowId;
+        if (window === windowId) {
+            tabId = activeInfo.tabId;
+        } else if (windows[window] === undefined) {
+            // hacky, but later logic assumes that current window has some info about it
+            windows[window] = {
+                tab: activeInfo.tabId
+            };
+        }
         chrome.tabs.get(activeInfo.tabId, function(tab) {
             handleNewTab(tab);
         });
@@ -226,16 +235,12 @@ onSettingLoad("siteBlockerEnabled", (e) => {
         if (windows[tab.windowId].tab === id && changeInfo) {
             var thisWindow = tab.windowId === windowId;
             if (changeInfo.status === "loading") {
-                if (thisWindow) {
-                    handleNewTab(tab);
-                } else {
-                    handleBackgroundTab(tab);
-                }
+                handleNewTab(tab);
             } else if (changeInfo.title) {
                 //this should be consistent with handleNewTab
                 //want to change, but this is simpler for now
                 var newTitle = tab.incognito ? "incognito" : changeInfo.title;
-                windows[windowId].title = newTitle;
+                windows[tab.windowId].title = newTitle;
                 // need to do this incase current information is being overwritten due to wasting
                 // this assumes that updating title happens with no change in url
                 if (thisWindow || windows[windowId].url === url) {
@@ -262,13 +267,13 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                     if (tabs.length) {
                         var activeTab = tabs[0];
                         tabId = activeTab.id;
+                        windowId = id;
                         handleNewTab(activeTab);
                     } else {
                         log("window empty tab");
                     }
                 });
             }
-            windowId = id;
         }
     });
 
@@ -280,7 +285,16 @@ onSettingLoad("siteBlockerEnabled", (e) => {
 
     //just a wrapper for handleNewPage
     function handleNewTab(tab) {
-        handleNewPage(tab.url, tab.title, tab.incognito);
+        // will handle real tab objects and fake
+        // need to have all these properties
+        if (tab.windowId === windowId) {
+            handleNewPage(tab.url, tab.title, tab.incognito);
+        } else {
+            if (tab.windowId === undefined) {
+                log("undefined windowId")
+            }
+            handleBackgroundPage(tab.url, tab.title, tab.incognito, tab.windowId);
+        }
     }
 
     //just a wrapper for handleBackgroundPage
@@ -362,7 +376,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
             startTime: time
         };
         for (var w in windows) {
-            // lower wasting time is higher priority, but 0 is lowest, might was to reverse order
+            // lower wasting time is higher priority, but 0 is lowest, might want to reverse order
             if (windows[w].wasting && (!testWasting || (windows[w].wasting < testWasting))) {
                 testWasting = windows[w].wasting;
                 url = windows[w].url;
