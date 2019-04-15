@@ -15,7 +15,7 @@ var addMessageListener;
         if (a.from !== "background") {
             var funct = messageListeners[a.action];
             if (typeof funct === "function") {
-                funct(a, b, c);
+                return funct(a, b, c);
             }
         }
     });
