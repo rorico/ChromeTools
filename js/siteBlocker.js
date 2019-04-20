@@ -8,6 +8,8 @@ var title = "";
 var timeLeft = 0;
 var timeLine = [];
 var noBlocks = [];
+// data shown on timeline, may not be what is focused
+var foreground = {};
 // used in wordsParser
 var getWasteStreak;
 
@@ -18,7 +20,7 @@ addDefault("siteBlockerEnabled", true, "bool");
 onSettingLoad("siteBlockerEnabled", (e) => {
     if (!e) return;
     var tabId = -2;
-    var windowId = -3;
+    var windowId = -4;
     var returnTimer;
     var VIPtab = -1;
     var tempVIPtimer = -1;
@@ -86,6 +88,55 @@ onSettingLoad("siteBlockerEnabled", (e) => {
         "antizero": antizero
     });
     addScheduleListener(setupClass);
+
+    var inChrome = true;
+    function currentWindow() {
+        return inChrome ? windowId : -3;
+    }
+
+
+    function currentTab() {
+        // should be tabId inChrome and null outside
+        return windows[currentWindow()].tab;
+    }
+
+    addDefault("recordComputer", true, "bool");
+    onSettingLoad("recordComputer", (e) => {
+        addDefault("localUrl", "ws:localhost:2012", "str");
+
+        var conn = new WebSocket(settings.localUrl);
+        conn.onopen = () => {
+            console.log("localhost connected");
+        }
+        conn.onerror = (error) => {
+            log("localhost connection error" + error);
+        };
+
+        conn.onclose = () => {
+            log("connection to localhost closed");
+            inChrome = true;
+            delete windows[-3];
+            // refresh
+            refreshTimeline();
+            // TODO: retry logic
+        };
+
+        conn.onmessage = (message) => {
+            var data = message.data;
+            var [path, title] = JSON.parse(data);
+
+            if (/\\chrome.exe$/.test(path)) {
+                inChrome = true;
+                // do this for now so that wasting on the outside doesn't take time.
+                delete windows[-3];
+                refreshTimeline();
+            } else {
+                inChrome = false;
+                handleChange(path, title, false, -3, null);
+            }
+        }
+    });
+
 
     //set-up first time when opened
     startTimeLine();
@@ -191,7 +242,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
             var newTab = (tab) => {
                 tabId = tab.id;
                 windowId = tab.windowId;
-                handleNewTab(tab);
+                handleChangeTab(tab);
             };
             tabs.forEach(newTab);
             // can run these simultaneous, but too lazy
@@ -207,46 +258,43 @@ onSettingLoad("siteBlockerEnabled", (e) => {
     }
 
     chrome.tabs.onActivated.addListener(function(activeInfo) {
-        var window = activeInfo.windowId;
-        if (window === windowId) {
-            tabId = activeInfo.tabId;
-        } else if (windows[window] === undefined) {
-            // hacky, but later logic assumes that current window has some info about it
+        var id = activeInfo.tabId;
+        chrome.tabs.get(id, function(tab) {
+            var window = activeInfo.windowId;
+            if (window === windowId) {
+                tabId = id;
+            }
+            // will get filled in later
             windows[window] = {
-                tab: activeInfo.tabId
+                tab: id
             };
-        }
-        chrome.tabs.get(activeInfo.tabId, function(tab) {
-            handleNewTab(tab);
+            handleChangeTab(tab);
         });
     });
 
     chrome.tabs.onUpdated.addListener(function(id, changeInfo, tab) {
-        // finish keyword updates on page changes, check here
-        // want to keep track even if current
-        if (finishTab && id === VIPtab) {
-            // this should be the same as for handleNewTab
-            if (changeInfo && changeInfo.status === "loading") {
+        if (changeInfo) {
+            // page changed
+            if (changeInfo.status === "loading") {
+                // finish keyword updates on page changes, check here
+                if (finishTab && id === VIPtab) {
                     finishTab = false;
                     VIPtab = -1;
+                }
+                handleChangeTab(tab);
             }
-        }
-
-        if (windows[tab.windowId].tab === id && changeInfo) {
-            var thisWindow = tab.windowId === windowId;
-            if (changeInfo.status === "loading") {
-                handleNewTab(tab);
-            } else if (changeInfo.title) {
-                //this should be consistent with handleNewTab
-                //want to change, but this is simpler for now
-                var newTitle = tab.incognito ? "incognito" : changeInfo.title;
-                windows[tab.windowId].title = newTitle;
-                // need to do this incase current information is being overwritten due to wasting
-                // this assumes that updating title happens with no change in url
-                if (thisWindow || windows[windowId].url === url) {
-                    title = newTitle;
+            // title updated (delayed)
+            if (changeInfo.title) {
+                // since this delayed, just manually update the current entry
+                // not ideal, but simpler
+                if (id === windows[tab.windowId].tab) {
+                    windows[tab.windowId].title = changeInfo.title;
+                    if (windows[tab.windowId] === foreground) {
+                        title = tab.incognito ? "incognito" : changeInfo.title;
+                    }
                 }
             }
+
         }
     });
 
@@ -258,22 +306,32 @@ onSettingLoad("siteBlockerEnabled", (e) => {
     });
 
     chrome.windows.onFocusChanged.addListener(function(id) {
-        //due to browserAction triggering this, gonna have to workaround it
         if (id === chrome.windows.WINDOW_ID_NONE) {
-            //handleNewPage("", "Outside Chrome");
-        } else {
-            if (windowId !== id) {
-                chrome.tabs.query({windowId:id, active:true}, function(tabs) {
-                    if (tabs.length) {
-                        var activeTab = tabs[0];
-                        tabId = activeTab.id;
-                        windowId = id;
-                        handleNewTab(activeTab);
+            // this only happens in debugger and browserAction
+            // they don't have own tab info so don't care
+            // the chrome tab query also doesn't play nice with it
+            return;
+        }
+        if (windowId !== id) {
+            chrome.tabs.query({windowId:id, active:true}, function(tabs) {
+                if (tabs.length) {
+                    var activeTab = tabs[0];
+                    tabId = activeTab.id;
+                    // this windowId can be different from id
+                    // namely due to current window being -1
+                    windowId = activeTab.windowId;
+                    // this sets it up for active tab in windows
+                    // don't handle activeTab, as tab could be blocked.
+                    if (windows[windowId]) {
+                        refreshTimeline();
                     } else {
-                        log("window empty tab");
+                        handleChangeTab(activeTab);
                     }
-                });
-            }
+                    // 
+                } else {
+                    log("window empty tab");
+                }
+            });
         }
     });
 
@@ -283,26 +341,54 @@ onSettingLoad("siteBlockerEnabled", (e) => {
         }
     });
 
-    //just a wrapper for handleNewPage
-    function handleNewTab(tab) {
-        // will handle real tab objects and fake
-        // need to have all these properties
-        if (tab.windowId === windowId) {
-            handleNewPage(tab.url, tab.title, tab.incognito);
-        } else {
-            if (tab.windowId === undefined) {
-                log("undefined windowId")
+    function handleChangeTab(tab) {
+        handleChange(tab.url, tab.title, tab.incognito, tab.windowId, tab.id);
+    }
+
+    function handleChange(newUrl, newTitle, incognito, wId, tId) {
+        var testWasting = wastingTime;
+        if (!windows[wId]) {
+            // will get filled in lower
+            windows[wId] = {
+                tab: tId
             }
-            handleBackgroundPage(tab.url, tab.title, tab.incognito, tab.windowId);
+        }
+        if (windows[wId].tab === tId) {
+            var testWasting = matchesURL(newUrl);
+            //consider converting to integer right here
+            var startTime = new Date();
+            // overwrite entire object instead of partial, incase references are kept elsewhere
+            windows[wId] = {
+                wasting: testWasting,
+                title: newTitle,
+                url: newUrl,
+                incognito: incognito,
+                tab: tId,
+                window: wId,
+                startTime: startTime
+            };
+
+
+            var currentW = currentWindow();
+            var currentT = currentTab();
+            // start with copy of foreground
+            // overwrite with things that are higher wasting
+            var newForeground = windows[currentW];
+            for (var w in windows) {
+                // lower wasting time is higher priority, but 0 is lowest, might want to reverse order
+                if (windows[w].wasting && (!newForeground.wasting || (windows[w].wasting < newForeground.wasting))) {
+                    newForeground = windows[w];
+                }
+            }
+
+            if ((wId === currentW && tId === currentT) ||
+                newForeground !== foreground) {
+                updateTimeline(newForeground, startTime);
+            }
         }
     }
 
-    //just a wrapper for handleBackgroundPage
-    function handleBackgroundTab(tab) {
-        handleBackgroundPage(tab.url, tab.title, tab.incognito, tab.windowId);
-    }
-
-    function handleNewPage(newUrl, newTitle, incognito) {
+    function updateTimeline(info, newStart) {
         //handle previous page
         var timeSpent = new Date() - startTime;
         //if small time spent on wasting, don't count
@@ -327,12 +413,12 @@ onSettingLoad("siteBlockerEnabled", (e) => {
             });
         }
         //handle new page
-        startTime = new Date();     //consider converting to integer right here
-
-        var result = updateWindow(newUrl, newTitle, incognito, windowId, tabId, startTime);
-        url = result.url;
-        title = result.title;
-        wastingTime = result.wasting;
+        //TODO, make incognito a setting
+        url = info.incognito ? "incognito" : info.url;
+        title = info.incognito ? "incognito" : info.title;
+        startTime = newStart;
+        wastingTime = info.wasting;
+        foreground = info;
 
         timeLeftOutput();
 
@@ -352,42 +438,10 @@ onSettingLoad("siteBlockerEnabled", (e) => {
         }
     }
 
-
-    function handleBackgroundPage(newUrl, newTitle, incognito, window) {
-        var result = updateWindow(newUrl, newTitle, incognito, window, windows[window].tab, new Date());
-        if (result.wasting !== wastingTime || result.url !== url || result.title !== title) {
-            // refresh
-            handleNewPage(windows[windowId].url, windows[windowId].title);
-        }
-    }
-
-    function updateWindow(newUrl, newTitle, incognito, windowId, tab, time) {
-        //TODO, make incognito a setting
-        var url = incognito ? "incognito" : newUrl;
-        var title = incognito ? "incognito" : newTitle;
-        var testWasting = matchesURL(newUrl);
-        // overwrite entire object instead of partial, incase references are kept elsewhere
-        windows[windowId] = {
-            wasting: testWasting,
-            title: title,
-            url: url,
-            tab: tabId,
-            window: windowId,
-            startTime: time
-        };
-        for (var w in windows) {
-            // lower wasting time is higher priority, but 0 is lowest, might want to reverse order
-            if (windows[w].wasting && (!testWasting || (windows[w].wasting < testWasting))) {
-                testWasting = windows[w].wasting;
-                url = windows[w].url;
-                title = windows[w].title;
-            }
-        }
-        return {
-            wasting: testWasting,
-            url: url,
-            title: title
-        };
+    function refreshTimeline() {
+        var currentW = currentWindow();
+        var foreground = windows[currentW] || {};
+        handleChange(foreground.url, foreground.title, foreground.incognito, currentW, tabId);
     }
 
     //checks all levels and returns the level of url if matched, 0 if none
@@ -467,9 +521,12 @@ onSettingLoad("siteBlockerEnabled", (e) => {
             }
 
             var displayTime = time;
-            var blocking = Object.values(windows).filter((w) => w.wasting);
+            // cannot block any window outside of chrome
+            var blocking = Object.values(windows).filter(w => w.window !== -3 && w.wasting)
 
             if (VIPtab !== -1) {
+                // can be vip tab without wasting time
+                // still want to show time left
                 var VIPinfo;
                 blocking.some((b, i) => {
                     if (b.tab === VIPtab) {
@@ -478,8 +535,10 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                         return true;
                     }
                 });
+                var tabId = windows[windowId].tab;
                 var thisTab = VIPtab === tabId;
-                // this handles finish keyword, kinda sketch, but I can't think of an edge case where this doens't work
+                // this handles finish keyword, kinda sketch, but I can't think of an edge case where this doesn't work
+                // TODO test without this
                 if (thisTab) {
                     VIPinfo = windows[windowId];
                 }
@@ -564,24 +623,22 @@ onSettingLoad("siteBlockerEnabled", (e) => {
         //sets a reminder when timeLeft reaches 0, and blocks site
         blockTab = function(tabs, time, blockType, oneTab) {
             // on blocked tab per window (all foreground should be blocked)
-            if (oneTab || time < 0) {
+            if (time > 0) {
+                unblockAll();
+            } else {
                 blocked.some((b, i) => {
                     // both of these are independent, but only one happens at a time
                     if (oneTab && b.tab === oneTab[0].tab) {
                         unblockTab(b);
                         blocked.splice(i, 1);
                         return true;
-                    } else if (b.window == windowId) {
+                    } else if (b.tab !== windows[b.window].tab) {
                         // do not unblock the site if tab hasn't changed and still no timeLeft
-                        if (!(b.tab === tabId && time < 0)) {
-                            unblockTab(b);
-                            blocked.splice(i, 1);
-                        }
+                        unblockTab(b);
+                        blocked.splice(i, 1);
                         return true;
                     }
                 });
-            } else if (time > 0) {
-                unblockAll();
             }
 
             blockTimers.forEach(clearTimeout);
@@ -618,7 +675,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                 }
                 block(tabs, time, blockType);
             }
-            if (oneTab && isFinite(oneTab[1])) {
+            if (wastingTime && oneTab && isFinite(oneTab[1])) {
                 block([oneTab[0]], oneTab[1], blockType);
             }
         };
@@ -695,13 +752,11 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                             tab: tab.tab,
                             window: tab.window,
                             url: tab.url,
+                            incognito: incognito,
                             title: tab.title
                         });
-                        if (tab.tab === tabId) {
-                            handleNewPage("Blocked", "Blocked");
-                        } else if (tab.tab === windows[tab.window].tab) {
-                            handleBackgroundPage("Blocked", "Blocked", false, tab.window);
-                        }
+
+                        handleChange("Blocked", "Blocked", false, tab.window, tab.tab);
                         storeData("block", [+new Date(), tab.url, tab.title, tab.wasting]);
                     }
                 });
@@ -712,12 +767,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
             chrome.tabs.sendMessage(tab.tab, sendFormat("unblock"), (unblocked) => {
                 // important to not run in same thread to allow this one to finish to avoid recursion problems
                 if (unblocked) {
-                    if (tab.tab === tabId) {
-                        handleNewPage(tab.url, tab.title);
-                    } else if (tab.tab === windows[tab.window].tab) {
-                        // doesn't handle edge case of incognito on unblock
-                        handleBackgroundPage(tab.url, tab.title, false, tab.window);
-                    }
+                    handleChange(tab.url, tab.title, tab.incognito, tab.window, tab.tab);
                 }
             });
         }
@@ -927,7 +977,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
 
     function tempVIP() {
         //so that you can't auto finish from temps
-        handleNewPage(url, title);
+        refreshTimeline();
         makeTabVIP();
         tempVIPstartTime = +new Date();
         tempVIPtimer = setTimeout(function() {
@@ -947,7 +997,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                 //change the current one and restart counter
                 sendContent("change", [timeLineIndex, wastingTime]);
                 wastingTime = 0;
-                handleNewPage(url, title);
+                refreshTimeline();
             }
         } else {
             if (timeLine[timeLineIndex] < settings.minChange) {
