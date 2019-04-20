@@ -2,6 +2,7 @@ var blockId = "chromeTools_block";
 var hidden = false;
 var blockObj;
 var oldFocus;
+var removeTimer;
 
 var blockScreen = $("<div id='" + blockId + "'></div>");
 $("body").append(blockScreen);
@@ -15,6 +16,25 @@ function prepare(type, info) {
     if (currentType(type, info)) {
         blockObj.prepare(info);
     }
+}
+
+// can be many tabs with this open, delete after a while to lessen load
+// shouldn't be noticeable for blocking
+function setRemove() {
+    clearTimeout(removeTimer);
+    removeTimer = setTimeout(() => {
+        if (hidden) {
+            remove();
+        } else {
+            setRemove();
+        }
+    // hardcode 10 minutes for now
+    }, 10 * 60 * 1000);
+}
+
+function remove() {
+    blockScreen.empty().off();
+    blockObj = null;
 }
 
 function block(type, info, callback) {
@@ -62,6 +82,7 @@ function currentType(type, info) {
 }
 
 function init(type, info) {
+    clearTimeout(removeTimer);
     blockScreen.empty().off();
     blockObj = {type:type};
     var nullFunct = function() {};
@@ -103,6 +124,7 @@ function unblock() {
         oldFocus.focus();
     }
     hidden = true;
+    setRemove();
 }
 
 //same paramaters as background, works the same
