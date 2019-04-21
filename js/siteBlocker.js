@@ -109,7 +109,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
             console.log("localhost connected");
         }
         conn.onerror = (error) => {
-            log("localhost connection error" + error);
+            log("localhost connection error: " + JSON.stringify(error));
         };
 
         conn.onclose = () => {
