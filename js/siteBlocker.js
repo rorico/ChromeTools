@@ -747,14 +747,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                 chrome.tabs.sendMessage(tab.tab, data, function(isBlocked) {
                     //when page is actually blocked, update timeline
                     if (isBlocked) {
-                        blocked.push({
-                            type: type,
-                            tab: tab.tab,
-                            window: tab.window,
-                            url: tab.url,
-                            incognito: incognito,
-                            title: tab.title
-                        });
+                        blocked.push(Object.assign({type: type}, tab));
 
                         handleChange("Blocked", "Blocked", false, tab.window, tab.tab);
                         storeData("block", [+new Date(), tab.url, tab.title, tab.wasting]);
