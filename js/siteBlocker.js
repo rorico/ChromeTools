@@ -407,6 +407,12 @@ onSettingLoad("siteBlockerEnabled", (e) => {
                 }, 0);
             }
         }
+        // don't include hack to start at 0
+        if (url !== "starting") {
+            setTimeout(() => {
+                storeData("timeline", newest);
+            });
+        }
         if (settings.afkRestart && timeSpent > settings.timeLineLength) {
             setTimeout(() => {
                 resetTime();
