@@ -408,7 +408,7 @@ onSettingLoad("siteBlockerEnabled", (e) => {
             }
         }
         // don't include hack to start at 0
-        if (url !== "starting") {
+        if (url && url !== "starting") {
             setTimeout(() => {
                 storeData("timeline", newest);
             });
