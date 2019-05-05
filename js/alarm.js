@@ -98,7 +98,7 @@ function setRing(alarmObj, alarmNumber, delay) {
         //don't ring if chrome is closed
         //likely want to change the way this is done later
         chrome.windows.getAll(function(windows) {
-            if (windows.length) {
+            if (windows.length && alarms[alarmNumber] === alarmObj) {
                 audio.play();
 
                 //sleep auto snoozes
