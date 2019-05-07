@@ -67,8 +67,6 @@ function getTickTick() {
     });
 
     function compareDate(day1, day2) {
-        return day1.getDate() <= day2.getDate() &&
-        day1.getMonth() <= day2.getMonth() && 
-        day1.getYear() <= day2.getYear();
+        return day1.toISOString().split("T")[0] <= day2.toISOString().split("T")[0];
     }
 }
