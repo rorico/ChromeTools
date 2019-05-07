@@ -48,7 +48,7 @@ chrome.runtime.getBackgroundPage(function (backgroundPage) {
     ])
 
     addNumberListener((num) => {
-        if (youtubeButton.state === 2) {
+        if (youtubeButton && youtubeButton.state === 2) {
             // 0 index
             youtubeButton.click(num - 1);
         } else {
