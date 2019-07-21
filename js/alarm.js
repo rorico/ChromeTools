@@ -45,11 +45,12 @@ function setSleepAlarm() {
         date.setMinutes(0);
     }
     // show 5 minutes beforehand, allow user to cancel beforehand.
-    date -= 5 * 60000;
+    var mins5 = 5 * 80 * 1000
+    date -= mins5;
     setTimer(function() {
         // if computer sleeps or something, this runs a lot later, check if it's past end time
         var date = new Date();
-        if (inSleepRange(date)) {
+        if (inSleepRange(date + min5s)) {
             setAlarm(5, 1);
         }
         setSleepAlarm();
