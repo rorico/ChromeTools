@@ -21,6 +21,7 @@ chrome.browserAction.setBadgeBackgroundColor({color:defaultColor});
 //sets alarm when it rings so can't stop before
 var sleepAlarmStart = 22;   //10pm
 var sleepAlarmEnd = 6;      //6am
+var sleepAlarmTimer;
 setSleepAlarm();
 
 addMessageListener({
@@ -36,27 +37,33 @@ addMessageListener({
     }
 });
 
-function setSleepAlarm() {
+function setSleepAlarm(five) {
     var date = new Date();
     date.setSeconds(0);
-    date.setMinutes(Math.floor((date.getMinutes() + 5)/30)*30 + 30);
+    date.setMinutes(toNearest(date.getMinutes(), five ? 5 : 30));
     if (!inSleepRange(date)) {
         date.setHours(sleepAlarmStart);
         date.setMinutes(0);
     }
     // show 5 minutes beforehand, allow user to cancel beforehand.
-    var mins5 = 5 * 80 * 1000
-    date -= mins5;
-    setTimer(function() {
+    var preTime = 5 * 60 * 1000;
+    date -= preTime;
+    var delay = date - new Date()
+
+    clearTimer(sleepAlarmTimer);
+    sleepAlarmTimer = setTimer(function() {
         // if computer sleeps or something, this runs a lot later, check if it's past end time
         var date = new Date();
-        if (inSleepRange(date + min5s)) {
-            setAlarm(5, 1);
+        if (inSleepRange(date + preTime)) {
+            setAlarm(Math.min(delay + preTime, preTime) / 60000, 1);
         }
         setSleepAlarm();
-    }, date - new Date());
+    }, delay);
     function inSleepRange(date) {
         return date.getHours()>=sleepAlarmStart || date.getHours()<=sleepAlarmEnd;
+    }
+    function toNearest(num, quot) {
+        return Math.floor(num / quot)*quot + quot
     }
 }
 
@@ -111,7 +118,7 @@ function setRing(alarmObj, alarmNumber, delay) {
 
                     timeout = setTimeout(function() {
                         removeAlarm(alarmNumber, alarmObj.type);
-                        setAlarm(5, 1);
+                        setSleepAlarm(true);
                     }, amount * 1000);
                 } else if (alarmObj.type === 2) {
                     timeout = setTimeout(function() {
@@ -122,6 +129,10 @@ function setRing(alarmObj, alarmNumber, delay) {
         });
     }, delay * 60000);
     alarmObj.destructor = function() {
+        // removing sleep alarm, set to next half hour
+        if (alarmObj.type === 1) {
+            setSleepAlarm();
+        }
         clearTimer(ringer);
         clearTimeout(timeout);
     };
