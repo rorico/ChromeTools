@@ -54,7 +54,8 @@ function setSleepAlarm(five) {
     sleepAlarmTimer = setTimer(function() {
         // if computer sleeps or something, this runs a lot later, check if it's past end time
         var date = new Date();
-        if (inSleepRange(date + preTime)) {
+        date.setMinutes(date.getMinutes() + preTime)
+        if (inSleepRange(date)) {
             setAlarm(Math.min(delay + preTime, preTime) / 60000, 1);
         }
         setSleepAlarm();
