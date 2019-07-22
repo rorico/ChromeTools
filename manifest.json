@@ -1,6 +1,6 @@
 {
   "name": "Chrome Tools",
-  "version": "10.1.0",
+  "version": "10.1.1",
   "description": "Various tools to help with organization and time management",
   "permissions": [
     "<all_urls>",
