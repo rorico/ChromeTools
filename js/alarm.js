@@ -38,25 +38,23 @@ addMessageListener({
 });
 
 function setSleepAlarm(five) {
-    var date = new Date();
-    date.setSeconds(0);
-    date.setMinutes(toNearest(date.getMinutes(), five ? 5 : 30));
-    if (!inSleepRange(date)) {
-        date.setHours(sleepAlarmStart);
-        date.setMinutes(0);
+    var newAlarm = new Date();
+    newAlarm.setSeconds(0);
+    newAlarm.setMinutes(toNearest(newAlarm.getMinutes(), five ? 5 : 30));
+    if (!inSleepRange(newAlarm)) {
+        newAlarm.setHours(sleepAlarmStart);
+        newAlarm.setMinutes(0);
     }
     // show 5 minutes beforehand, allow user to cancel beforehand.
     var preTime = 5 * 60 * 1000;
-    date -= preTime;
-    var delay = date - new Date()
+    var delay = newAlarm - new Date() - preTime;
 
     clearTimer(sleepAlarmTimer);
     sleepAlarmTimer = setTimer(function() {
         // if computer sleeps or something, this runs a lot later, check if it's past end time
         var date = new Date();
-        date.setMinutes(date.getMinutes() + preTime)
-        if (inSleepRange(date)) {
-            setAlarm(Math.min(delay + preTime, preTime) / 60000, 1);
+        if (date < newAlarm && inSleepRange(newAlarm)) {
+            setAlarm((newAlarm - date) / 60000, 1);
         }
         setSleepAlarm();
     }, delay);
