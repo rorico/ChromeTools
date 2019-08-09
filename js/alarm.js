@@ -72,7 +72,7 @@ function setAlarm(delay, type) {
         var alarm = alarms[i];
         if (!alarm) {
             var alarmTime = new Date();
-            alarmTime.setMinutes(alarmTime.getMinutes() + delay);
+            alarmTime = new Date(alarmTime + delay*60000);
             var alarmObj = {
                 state: 1,
                 alarmTime: alarmTime,
