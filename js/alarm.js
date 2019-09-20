@@ -56,7 +56,6 @@ function setSleepAlarm(five) {
         if (date < newAlarm && inSleepRange(newAlarm)) {
             setAlarm((newAlarm - date) / 60000, 1);
         }
-        setSleepAlarm();
     }, delay);
     function inSleepRange(date) {
         return date.getHours()>=sleepAlarmStart || date.getHours()<=sleepAlarmEnd;
