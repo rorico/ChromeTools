@@ -22,7 +22,8 @@ var special = [
     "README.md",
     "package.json",
     ".gitignore",
-    "node_modules"
+    "node_modules",
+    "7z.exe"
 ];
 
 //folllow semver, default to minor
