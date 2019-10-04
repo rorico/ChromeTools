@@ -66,12 +66,13 @@ function setSleepAlarm(five) {
 }
 
 // delay in minutes
-function setAlarm(delay, type) {
+function setAlarm(mins, type) {
+    var delay = mins < 0 ? 0 : mins*60000
     for (var i = 0 ; i < numMaxAlarms ; i++) {
         var alarm = alarms[i];
         if (!alarm) {
             var alarmTime = new Date();
-            alarmTime = new Date(alarmTime + delay*60000);
+            alarmTime = new Date(+alarmTime + delay);
             var alarmObj = {
                 state: 1,
                 alarmTime: alarmTime,
@@ -125,7 +126,7 @@ function setRing(alarmObj, alarmNumber, delay) {
                 }
             }
         });
-    }, delay * 60000);
+    }, delay);
     alarmObj.destructor = function() {
         // removing sleep alarm, set to next half hour
         if (alarmObj.type === 1) {
