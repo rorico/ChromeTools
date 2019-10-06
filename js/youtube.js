@@ -68,6 +68,8 @@ onSettingLoad("youtubeEnabled", (e) => {
                     } else if (isBlocked()) {
                         playCurrent(playing);
                     }
+                } else if (key === "E".charCodeAt(0)) {
+                    playLast();
                 } else {
                     playing.forEach((t) => chrome.tabs.sendMessage(t.id, sendFormat("key", key)));
                 }
@@ -133,6 +135,12 @@ onSettingLoad("youtubeEnabled", (e) => {
     function playFirst() {
         if (youtubeQueue.length) {
             play(youtubeQueue.shift().id);
+        }
+    }
+    
+    function playLast() {
+        if (youtubeQueue.length) {
+            play(youtubeQueue.pop().id);
         }
     }
 

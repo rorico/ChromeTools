@@ -32,6 +32,7 @@ var timeLineInit;
                     ["NO", zero],
                     ["MO", antizero, 8],
                     ["P", skipAd],
+                    ["E", () => youtube("E".charCodeAt(0))],
                     ["K", () => youtube("K".charCodeAt(0))],
                     ["J", () => youtube("J".charCodeAt(0))],
                     ["L", () => youtube("L".charCodeAt(0))]];
