@@ -9,7 +9,7 @@ var addArrowListener;
     var numberListeners = [];
     var arrowListeners = {};
 
-    var currentPhrase = 0;
+    var currentPhrase = '';
     var phraseIndex = 0;
     var allowMistakes = false;
 
