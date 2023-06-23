@@ -20,7 +20,7 @@
   "homepage": "https://github.com/rorico/ChromeTools#readme",
   "dependencies": {
     "ncp": "^2.0.0",
-    "semver": "^5.5.0",
+    "semver": "^7.5.2",
     "uglify-es": "^3.3.4",
     "uglifycss": "0.0.27"
   }
